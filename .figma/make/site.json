@@ -1,0 +1,10 @@
+{
+  "description": "This e-commerce platform specializes in diesel injector repair and sales, offering a user-friendly experience for mechanics and car enthusiasts to easily order parts and services.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
