@@ -14,7 +14,12 @@ export default function Footer({ navigate }: FooterProps) {
         <div className="lg:col-span-1 space-y-4">
           <div className="flex items-center gap-3">
             <div className="h-11 w-auto flex items-center justify-center shrink-0">
-              <img src="/images/logo-footer.png" alt="TIFAOUT AUTO Logo" className="h-full max-h-11 object-contain drop-shadow-md" />
+              <img
+                src="/images/logo-footer.png"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+                alt="TIFAOUT AUTO Logo"
+                className="h-full max-h-11 object-contain drop-shadow-md"
+              />
             </div>
             <div>
               <div className="text-xl font-extrabold tracking-wider text-white font-display">TIFAOUT AUTO</div>
