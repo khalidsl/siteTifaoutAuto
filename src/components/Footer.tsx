@@ -16,7 +16,7 @@ export default function Footer({ navigate }: FooterProps) {
             <div className="h-11 w-auto flex items-center justify-center shrink-0">
               <img
                 src="/images/logo-footer.png"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 alt="TIFAOUT AUTO Logo"
                 className="h-full max-h-11 object-contain drop-shadow-md"
               />

@@ -99,7 +99,7 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
           <div className="h-11 w-auto flex items-center justify-center shrink-0">
             <img
               src="/images/logo-header.png"
-              onError={(e) => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               alt="TIFAOUT AUTO Logo"
               className="h-full max-h-11 object-contain drop-shadow-md"
             />
