@@ -11,17 +11,6 @@ exports.createOrder = async (req, res) => {
     const order = new Order({ isGuest, user: user || null, guestInfo, items, total });
     const created = await order.save();
 
-    // ── Decrement stock for each item ──────────────────────────────
-    for (const item of items) {
-      if (item.productId) {
-        await Product.findByIdAndUpdate(
-          item.productId,
-          { $inc: { stock: -item.qty } },
-          { returnDocument: 'after' }
-        ).catch(err => console.warn('Stock update failed for', item.productId, err.message));
-      }
-    }
-
     // ── Award loyalty points to registered users (1 pt per 100 MAD) ─
     if (!isGuest && user) {
       const pointsEarned = Math.floor((total || 0) / 100);
@@ -77,12 +66,67 @@ exports.getMyOrders = async (req, res) => {
 // @access Private/Admin
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Commande introuvable.' });
-    order.status = req.body.status || order.status;
-    const updated = await order.save();
-    res.json(updated);
+    const orderId = req.params.id;
+    const bodyStatus = typeof req.body === 'string' ? req.body : req.body?.status;
+    const rawStatus = bodyStatus ?? req.query?.status;
+    const nextStatus = typeof rawStatus === 'string' ? rawStatus.trim() : '';
+
+    const allowedStatuses = ['En attente', 'En préparation', 'Payée', 'Expédié', 'Livré', 'Retour', 'Annulé'];
+
+    if (!allowedStatuses.includes(nextStatus)) {
+      return res.status(400).json({ message: 'Statut de commande invalide.' });
+    }
+
+    const existingOrder = await Order.findById(orderId).lean();
+    if (!existingOrder) {
+      return res.status(404).json({ message: 'Commande introuvable.' });
+    }
+
+    // Old orders were already deducted at creation time before stockAdjusted existed.
+    const stockAdjusted = existingOrder.stockAdjusted !== undefined ? existingOrder.stockAdjusted : true;
+    const shouldDeductStock = nextStatus === 'Payée' && !stockAdjusted;
+    const shouldRestoreStock = nextStatus === 'Retour' && stockAdjusted;
+
+    if (shouldDeductStock || shouldRestoreStock) {
+      const stockDelta = shouldDeductStock ? -1 : 1;
+      if (shouldDeductStock) {
+        for (const item of existingOrder.items || []) {
+          if (!item.productId || !Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0) continue;
+          const product = await Product.findById(item.productId).select('stock').lean();
+          if (!product || Number(product.stock) < Number(item.qty)) {
+            return res.status(409).json({ message: `Stock insuffisant pour ${item.productName || 'un produit'}.` });
+          }
+        }
+      }
+
+      for (const item of existingOrder.items || []) {
+        if (!item.productId || !Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0) continue;
+        const product = await Product.findOneAndUpdate(
+          { _id: item.productId, ...(shouldDeductStock ? { stock: { $gte: Number(item.qty) } } : {}) },
+          { $inc: { stock: stockDelta * Number(item.qty) } },
+          { new: true }
+        );
+        if (!product && shouldDeductStock) {
+          return res.status(409).json({ message: `Stock insuffisant pour ${item.productName || 'un produit'}.` });
+        }
+      }
+    }
+
+    const nextStockAdjusted = shouldRestoreStock ? false : shouldDeductStock ? true : stockAdjusted;
+
+    const updated = await Order.findByIdAndUpdate(
+      orderId,
+      { $set: { status: nextStatus, stockAdjusted: nextStockAdjusted } },
+      { returnDocument: 'after', runValidators: false }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Commande introuvable.' });
+    }
+
+    return res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur serveur.' });
+    console.error('updateOrderStatus error:', error.message);
+    return res.status(500).json({ message: 'Erreur serveur.' });
   }
 };

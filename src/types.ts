@@ -54,7 +54,7 @@ export interface Order {
   shipping: number;
   total: number;
   guestInfo: GuestInfo;
-  status: 'En attente' | 'En préparation' | 'Expédié' | 'Livré' | 'Annulé';
+  status: 'En attente' | 'En préparation' | 'Payée' | 'Expédié' | 'Livré' | 'Retour' | 'Annulé';
   isGuest: boolean;
 }
 

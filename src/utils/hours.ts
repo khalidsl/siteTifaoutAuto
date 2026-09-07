@@ -55,7 +55,7 @@ export function getOpeningStatus(dateOverride?: Date): OpeningStatus {
     return {
       isOpen: false,
       statusBadgeText: 'FERMÉ (Ouvre bientôt)',
-      statusText: 'Ouvre ce matin à 08h30',
+      statusText: 'Ouvre ce matin à 09h30',
       badgeColor: '#D97706',
       badgeBg: '#FEF3C7',
     };
@@ -63,7 +63,7 @@ export function getOpeningStatus(dateOverride?: Date): OpeningStatus {
     return {
       isOpen: false,
       statusBadgeText: 'FERMÉ CE SOIR',
-      statusText: day === 6 ? 'Reouvre Lundi à 08h30' : 'Reouvre demain à 08h30',
+      statusText: day === 6 ? 'Reouvre Lundi à 09h30' : 'Reouvre demain à 09h30',
       badgeColor: '#D97706',
       badgeBg: '#FEF3C7',
     };

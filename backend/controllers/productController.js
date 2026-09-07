@@ -53,13 +53,16 @@ exports.getProducts = async (req, res) => {
   try {
     const { category, search, page = 1, limit = 100 } = req.query;
     const query = {};
+    const safePage = Math.max(1, Number.parseInt(String(page), 10) || 1);
+    const safeLimit = Math.min(200, Math.max(1, Number.parseInt(String(limit), 10) || 100));
 
     if (category && category !== 'all') {
       query.category = category;
     }
 
     if (search) {
-      const regex = new RegExp(search, 'i');
+      const escapedSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedSearch, 'i');
       query.$or = [
         { name: regex },
         { reference: regex },
@@ -68,13 +71,13 @@ exports.getProducts = async (req, res) => {
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (safePage - 1) * safeLimit;
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
       Product.countDocuments(query),
     ]);
 
-    res.json({ products, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
+    res.json({ products, total, page: safePage, pages: Math.ceil(total / safeLimit) });
   } catch (error) {
     console.error('getProducts error:', error);
     res.status(500).json({ message: 'Erreur serveur lors du chargement des produits.' });
@@ -173,7 +176,6 @@ exports.updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Produit introuvable.' });
-    console.log('updateProduct req.body:', req.body);
     const fields = ['name', 'reference', 'category', 'brand', 'description',
       'price', 'oldPrice', 'stock', 'isReconditioned', 'isNewPart', 'remarque'];
 
@@ -230,7 +232,6 @@ exports.updateProduct = async (req, res) => {
       product.imageUrl = req.body.imageUrl;
       if (!retainedImages.includes(req.body.imageUrl)) {
         retainedImages = [req.body.imageUrl];
-        console.log('updateProduct: retainedImages updated to manual imageUrl:', retainedImages);
       }
     }
 

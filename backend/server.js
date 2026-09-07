@@ -24,16 +24,21 @@ const ALLOWED_ORIGINS = [
   'http://localhost:4173',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:8443',
+  ...(process.env.FRONTEND_URL || '').split(',').map(origin => origin.trim()).filter(Boolean),
 ];
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (Postman, mobile, server-to-server)
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin) || (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin))) {
+      return callback(null, true);
+    }
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
 }));
+
 app.use(express.json({ limit: '10mb' }));
 
 // Ensure uploads folder exists in the frontend public directory

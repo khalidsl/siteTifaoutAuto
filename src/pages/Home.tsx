@@ -26,10 +26,10 @@ interface HomeProps {
 }
 
 const HERO_IMAGES = [
-  '/imagegarage.jpg',
-  '/imagegarage2.jpg',
-  '/imagegarage3.jpg',
-  '/imagegarage4.jpg',
+  '/images/image-garage.jpg',
+  '/images/image-garage-2.jpg',
+  '/images/image-garage-3.jpg',
+  '/images/image-garage-4.jpg',
 ];
 
 const SERVICES = [
@@ -54,8 +54,8 @@ const SERVICES = [
   {
     icon: <FaStore className="text-xl text-blue-400" />,
     title: "Vente Reconditionnés",
-    desc: "Stock permanent d'injecteurs et pompes reconditionnés garantis 12 mois. Échange standard disponible. Livraison sur tout le Maroc sous 24h.",
-    detail: "Garantie 12 mois",
+    desc: "Stock permanent d'injecteurs et pompes reconditionnés garantis 6 mois. Échange standard disponible. Livraison sur tout le Maroc sous 24h.",
+    detail: "Garantie 6 mois",
   },
 ];
 
@@ -231,7 +231,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
                 </li>
                 <li className="flex items-start gap-2.5">
                   <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
-                  <span>Toutes pièces garanties <strong>12 mois</strong> en échange standard</span>
+                  <span>Toutes pièces garanties <strong>6 mois</strong> en échange standard</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
@@ -376,7 +376,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
                 { val: 'Bosch EPS 200', label: 'Banc d\'essai certifié' },
                 { val: 'ISO 9001', label: 'Qualité reconditionnement' },
                 { val: 'Spécialiste Agréé', label: 'Bosch / Delphi / Denso' },
-                { val: '24h / 48h', label: 'Délai moyen atelier' },
+                { val: '24h', label: 'Délai moyen atelier' },
               ].map(s => (
                 <div key={s.label} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="font-display text-xl font-bold text-blue-900">{s.val}</div>

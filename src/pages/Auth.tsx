@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Page } from '../types';
-import { loginApi, registerApi, saveSession } from '../services/api';
+import { loginApi, registerApi } from '../services/api';
+import { useAuth, saveSession } from '../context/AuthContext';
 import {
   FaUserCheck,
   FaSpinner,
@@ -16,6 +17,7 @@ interface AuthProps {
 }
 
 export default function Auth({ navigate }: AuthProps) {
+  const { login } = useAuth();
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,6 +38,7 @@ export default function Auth({ navigate }: AuthProps) {
     try {
       const user = await loginApi(loginData.identifier, loginData.password);
       saveSession(user);
+      login(user);
       if (user.role === 'admin') {
         navigate('admin');
       } else {

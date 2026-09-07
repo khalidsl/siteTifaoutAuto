@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Page, CartItem, GuestInfo } from '../types';
-import { createOrderApi, getSession } from '../services/api';
+import { createOrderApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface CartProps {
   cart: CartItem[];
@@ -26,7 +27,7 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const user = getSession();
+  const { user } = useAuth();
 
   // Auto pre-fill if logged in
   useEffect(() => {

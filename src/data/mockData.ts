@@ -80,7 +80,7 @@ export const MOCK_ORDERS: Order[] = [
           images: ['https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&fit=crop'],
           compatible: ['Peugeot 308 1.6 HDi', 'Citroën C4 1.6 HDi'],
           description: 'Injecteur reconditionné à neuf dans nos ateliers avec pièces d\'origine.',
-          features: ['Testé sur banc EPS 200', 'Garantie 12 mois'],
+          features: ['Testé sur banc EPS 200', 'Garantie 6 mois'],
           inStock: true,
           isReconditioned: true,
         },

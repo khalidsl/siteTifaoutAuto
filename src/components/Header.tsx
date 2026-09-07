@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Page, CartItem } from '../types';
-import { getSession } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { getOpeningStatus } from '../utils/hours';
 import {
   FaPhone,
@@ -44,8 +44,8 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
     if (onCategoryNav) onCategoryNav(cat);
   };
 
-  const user = getSession();
-  
+  const { user } = useAuth();
+
   const handleAccountClick = () => {
     setMobileOpen(false);
     if (!user) navigate('auth');
@@ -97,7 +97,7 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
         {/* Logo */}
         <button onClick={() => navigate('home')} className="flex items-center gap-3 text-left group">
           <div className="h-11 w-auto flex items-center justify-center shrink-0">
-            <img src="/logo1.png" alt="TIFAOUT AUTO Logo" className="h-full max-h-11 object-contain drop-shadow-md" />
+            <img src="/images/logo-footer.png" alt="TIFAOUT AUTO Logo" className="h-full max-h-11 object-contain drop-shadow-md" />
           </div>
           <div>
             <div className="font-display text-2xl font-extrabold tracking-wider leading-none text-white group-hover:text-blue-400 transition-colors">
@@ -231,7 +231,7 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
           >
             <FaUserCheck className="text-blue-400 text-sm" />
             {user
-              ? (user.role === 'admin' ? ' BACK-OFFICE' : ` ${user.firstName || 'MON COMPTE'}`)
+              ? (user.role === 'admin' ? ' BACK-OFFICE' : ` ${user.firstName || 'MON ESPACE'}`)
               : 'CONNEXION / INSCRIPTION'}
           </button>
 
@@ -291,7 +291,7 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
               onClick={handleAccountClick}
               className="text-left py-2 text-xs font-bold uppercase tracking-wider text-blue-400 border-b border-slate-800 flex items-center gap-2"
             >
-              <FaUserCheck /> {user ? 'MON COMPTE' : 'LOGIN / REGISTER'}
+              <FaUserCheck /> {user ? 'MON ESPACE' : 'LOGIN / REGISTER'}
             </button>
 
             <button

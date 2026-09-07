@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Page, CartItem } from '../types';
 import { getCategoryLabel } from '../data/products';
 import { getProductByIdApi, getProductsApi } from '../services/api';
+import { resolveMediaUrl } from '../utils/media';
 
 interface ProductDetailProps {
   productId: string;
@@ -107,9 +108,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
     rawImages = [defaultImg];
   }
 
-  const images = rawImages.map(img => 
-    img.startsWith('http') ? img : `http://localhost:5000${img}`
-  );
+  const images = rawImages.map(img => resolveMediaUrl(img, defaultImg));
 
   // Map backend format to frontend CartItem product structure
   const cartProduct = {
@@ -353,9 +352,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {related.map(r => {
-                const rImg = r.imageUrl 
-                  ? (r.imageUrl.startsWith('http') ? r.imageUrl : `http://localhost:5000${r.imageUrl}`) 
-                  : PLACEHOLDER;
+                const rImg = resolveMediaUrl(r.imageUrl, PLACEHOLDER);
                 
                 return (
                   <button

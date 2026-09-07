@@ -12,28 +12,28 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     id: 1,
-    url: '/image_dci.jpg',
+    url: '/images/image-dci.jpg',
     title: 'Banc d\'Essai & Injecteur Common Rail DCI',
     subtitle: 'Test de pression haute précision et diagnostic électronique certifié',
     badge: 'SYSTÈME DCI / COMMON RAIL',
   },
   {
     id: 2,
-    url: '/dci_200_with_keyboard_monitor_testing.jpg',
+    url: '/images/dci-200-with-keyboard-monitor-testing.jpg',
     title: 'Banc Officiel Bosch EPS 200',
     subtitle: 'Calibration en temps réel de 250 à 1800 bar selon spécifications OEM',
     badge: 'BANC CERTIFIÉ BOSCH',
   },
   {
     id: 3,
-    url: '/dci200travail.jpg',
+    url: '/images/dci200-travail.jpg',
     title: 'Nettoyage Ultrasons & Reconditionnement',
     subtitle: 'Remplacement systématique des buses, valves et joints par des pièces d\'origine',
     badge: 'RECONDITIONNEMENT A NOUVEAU',
   },
   {
     id: 4,
-    url: '/dci200.jpg',
+    url: '/images/dci200.jpg',
     title: 'Pompes Haute Pression Bosch & Delphi',
     subtitle: 'Révision intégrale des pompes CP1, CP3, CP4, DFP et régulateurs DRV',
     badge: 'POMPES HAUTE PRESSION',

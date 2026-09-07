@@ -1,30 +1,5 @@
 const User = require('../models/User');
 
-// @desc   Create the default admin account (run once)
-// @route  POST /api/admin/seed
-// @access Public (to be removed after first use)
-exports.seedAdmin = async (req, res) => {
-  try {
-    const existingAdmin = await User.findOne({ email: 'admin@gmail.com' });
-    if (existingAdmin) {
-      return res.json({ message: 'Admin already exists.' });
-    }
-
-    const admin = await User.create({
-      firstName: 'Admin',
-      lastName: 'TIFAOUT',
-      email: 'admin@gmail.com',
-      phone: '0525200665',
-      password: 'admin2026',
-      role: 'admin',
-    });
-
-    res.status(201).json({ message: 'Admin account created!', email: admin.email });
-  } catch (error) {
-    console.error('seedAdmin error:', error);
-    res.status(500).json({ message: 'Error seeding admin.' });
-  }
-};
 
 // @desc   Get all registered users (admin)
 // @route  GET /api/admin/users

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { Page, Category, QuoteRequest as QuoteRequestType } from '../types';
-import { createQuoteApi, getSession } from '../services/api';
+import { createQuoteApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { resolveMediaUrl } from '../utils/media';
 import {
   FaCar,
   FaUser,
@@ -43,7 +45,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const user = getSession();
+  const { user } = useAuth();
 
   // Auto pre-fill if logged in
   useEffect(() => {
@@ -132,9 +134,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
 
   // ── Success State Screen ──
   if (submittedQuote) {
-    const photoUrl = submittedQuote.photoUrl
-      ? (submittedQuote.photoUrl.startsWith('http') ? submittedQuote.photoUrl : `http://localhost:5000${submittedQuote.photoUrl}`)
-      : null;
+    const photoUrl = submittedQuote.photoUrl ? resolveMediaUrl(submittedQuote.photoUrl) : null;
 
     return (
       <div className="min-h-screen bg-slate-100 pt-28 pb-16 px-6 flex items-center justify-center">
@@ -580,7 +580,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                     ✓
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Garantie 12 Mois</h4>
+                    <h4 className="font-bold text-slate-900 text-sm">Garantie 6 Mois</h4>
                     <p className="mt-0.5 text-slate-500">Toutes nos pièces reconditionnées en échange standard sont garanties un an.</p>
                   </div>
                 </div>

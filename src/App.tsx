@@ -1,20 +1,23 @@
-import { useState, useEffect } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import type { Page, CartItem, QuoteRequest as QuoteRequestType } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import StickyPhoneButton from './components/StickyPhoneButton';
-import Home from './pages/Home';
-import Catalog from './pages/Catalog';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Auth from './pages/Auth';
-import Contact from './pages/Contact';
-import QuoteRequest from './pages/QuoteRequest';
-import ClientPortal from './pages/ClientPortal';
-import AdminBackoffice from './pages/AdminBackoffice';
 import { MOCK_QUOTES } from './data/mockData';
+import { useAuth } from './context/AuthContext';
+
+const Home = lazy(() => import('./pages/Home'));
+const Catalog = lazy(() => import('./pages/Catalog'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Auth = lazy(() => import('./pages/Auth'));
+const Contact = lazy(() => import('./pages/Contact'));
+const QuoteRequest = lazy(() => import('./pages/QuoteRequest'));
+const ClientPortal = lazy(() => import('./pages/ClientPortal'));
+const AdminBackoffice = lazy(() => import('./pages/AdminBackoffice'));
 
 export default function App() {
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [catalogCategory, setCatalogCategory] = useState<string>('all');
@@ -43,7 +46,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage, selectedProductId]);
 
-  const navigate = (page: Page) => setCurrentPage(page);
+  const navigate = (page: Page) => {
+    if (page === 'admin' && (!user || user.role !== 'admin')) {
+      setCurrentPage('auth');
+      return;
+    }
+    if (page === 'client' && (!user || !user.token)) {
+      setCurrentPage('auth');
+      return;
+    }
+    setCurrentPage(page);
+  };
 
   const handleProductSelect = (id: string) => {
     setSelectedProductId(id);
@@ -97,59 +110,69 @@ export default function App() {
       />
 
       <main className="flex-1">
-        {currentPage === 'home' && (
-          <Home
-            navigate={navigate}
-            onProductSelect={handleProductSelect}
-            onCategoryNav={handleCategoryNav}
-          />
-        )}
-        {currentPage === 'catalog' && (
-          <Catalog
-            onProductSelect={handleProductSelect}
-            initialCategory={catalogCategory}
-          />
-        )}
-        {currentPage === 'product' && selectedProductId && (
-          <ProductDetail
-            productId={selectedProductId}
-            navigate={navigate}
-            cart={cart}
-            onAddToCart={handleAddToCart}
-            onProductSelect={handleProductSelect}
-          />
-        )}
-        {currentPage === 'cart' && (
-          <Cart
-            cart={cart}
-            navigate={navigate}
-            onUpdateQty={handleUpdateQty}
-            onRemove={handleRemove}
-            onClearCart={handleClearCart}
-          />
-        )}
-        {currentPage === 'devis' && (
-          <QuoteRequest
-            navigate={navigate}
-            onAddQuote={handleAddQuote}
-          />
-        )}
-        {currentPage === 'client' && (
-          <ClientPortal
-            navigate={navigate}
-          />
-        )}
-        {currentPage === 'admin' && (
-          <AdminBackoffice
-            navigate={navigate}
-          />
-        )}
-        {currentPage === 'auth' && (
-          <Auth navigate={navigate} />
-        )}
-        {currentPage === 'contact' && (
-          <Contact navigate={navigate} />
-        )}
+        <Suspense
+          fallback={
+            <div className="flex min-h-[60vh] items-center justify-center bg-slate-100">
+              <div className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
+                Chargement...
+              </div>
+            </div>
+          }
+        >
+          {currentPage === 'home' && (
+            <Home
+              navigate={navigate}
+              onProductSelect={handleProductSelect}
+              onCategoryNav={handleCategoryNav}
+            />
+          )}
+          {currentPage === 'catalog' && (
+            <Catalog
+              onProductSelect={handleProductSelect}
+              initialCategory={catalogCategory}
+            />
+          )}
+          {currentPage === 'product' && selectedProductId && (
+            <ProductDetail
+              productId={selectedProductId}
+              navigate={navigate}
+              cart={cart}
+              onAddToCart={handleAddToCart}
+              onProductSelect={handleProductSelect}
+            />
+          )}
+          {currentPage === 'cart' && (
+            <Cart
+              cart={cart}
+              navigate={navigate}
+              onUpdateQty={handleUpdateQty}
+              onRemove={handleRemove}
+              onClearCart={handleClearCart}
+            />
+          )}
+          {currentPage === 'devis' && (
+            <QuoteRequest
+              navigate={navigate}
+              onAddQuote={handleAddQuote}
+            />
+          )}
+          {currentPage === 'client' && (
+            <ClientPortal
+              navigate={navigate}
+            />
+          )}
+          {currentPage === 'admin' && (
+            <AdminBackoffice
+              navigate={navigate}
+            />
+          )}
+          {currentPage === 'auth' && (
+            <Auth navigate={navigate} />
+          )}
+          {currentPage === 'contact' && (
+            <Contact navigate={navigate} />
+          )}
+        </Suspense>
       </main>
 
       <Footer navigate={navigate} />

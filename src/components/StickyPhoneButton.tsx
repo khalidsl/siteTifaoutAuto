@@ -1,8 +1,12 @@
 import { getOpeningStatus } from '../utils/hours';
-import { FaPhoneAnim } from 'react-icons/fa6';
 import { FaPhone } from 'react-icons/fa6';
+import type { Page } from '../types';
 
-export default function StickyPhoneButton() {
+interface StickyPhoneButtonProps {
+  navigate?: (page: Page) => void;
+}
+
+export default function StickyPhoneButton({ navigate: _navigate }: StickyPhoneButtonProps = {}) {
   const opening = getOpeningStatus();
 
   return (

@@ -1,17 +1,42 @@
+import type { SessionUser } from '../context/AuthContext';
+
 // API service layer for TIFAOUT AUTO backend
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:5000/api';
+
+export interface ProductsResponse<T = unknown> {
+  products: T[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+const requestJson = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...((options.headers as Record<string, string>) ?? {}),
+    },
+    ...options,
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json') ? await response.json().catch(() => null) : await response.text().catch(() => null);
+
+  if (!response.ok) {
+    const message = (typeof data === 'object' && data && 'message' in data ? String((data as { message?: string }).message) : '') || 'Erreur de communication avec le serveur.';
+    throw new Error(message);
+  }
+
+  return data as T;
+};
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
-export const loginApi = async (identifier: string, password: string) => {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+export const loginApi = async (identifier: string, password: string): Promise<SessionUser> => {
+  return requestJson(`${API_BASE}/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ identifier, password }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Identifiant ou mot de passe incorrect.');
-  return data;
 };
 
 export const registerApi = async (payload: {
@@ -21,18 +46,14 @@ export const registerApi = async (payload: {
   phone: string;
   vehicleBrand?: string;
   password: string;
-}) => {
-  const res = await fetch(`${API_BASE}/auth/register`, {
+}): Promise<SessionUser> => {
+  return requestJson(`${API_BASE}/auth/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Erreur lors de l'inscription.");
-  return data;
 };
 
-// ─── PRODUCTS 
+// ─── PRODUCTS
 
 export interface ProductsFilter {
   category?: string;
@@ -41,7 +62,7 @@ export interface ProductsFilter {
   limit?: number;
 }
 
-export const getProductsApi = async (filters: ProductsFilter = {}) => {
+export const getProductsApi = async <T = any>(filters: ProductsFilter = {}): Promise<ProductsResponse<T> | T[]> => {
   const params = new URLSearchParams();
   if (filters.category && filters.category !== 'all') params.set('category', filters.category);
   if (filters.search) params.set('search', filters.search);
@@ -49,212 +70,146 @@ export const getProductsApi = async (filters: ProductsFilter = {}) => {
   if (filters.limit) params.set('limit', String(filters.limit));
 
   const url = `${API_BASE}/products${params.toString() ? `?${params}` : ''}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur chargement produits');
-  // Support both { products, total } shape and plain array (legacy)
-  return Array.isArray(data) ? data : data;
+  return requestJson<ProductsResponse<T> | T[]>(url);
 };
 
-export const getProductByIdApi = async (id: string) => {
-  const res = await fetch(`${API_BASE}/products/${id}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Produit introuvable');
-  return data;
+export const getProductByIdApi = async <T = any>(id: string): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/products/${id}`);
 };
 
-export const createProductApi = async (formData: FormData, token: string) => {
-  const res = await fetch(`${API_BASE}/products`, {
+export const createProductApi = async <T = any>(formData: FormData, token: string): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/products`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: formData,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur ajout produit');
-  return data;
 };
 
-
-
-
-export const deleteProductApi = async (id: string, token: string) => {
-  const res = await fetch(`${API_BASE}/products/${id}`, {
+export const deleteProductApi = async <T = any>(id: string, token: string): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/products/${id}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur suppression produit');
-  return data;
 };
 
-// ─── ORDERS 
+// ─── ORDERS
 
-export const createOrderApi = async (orderData: object) => {
-  const res = await fetch(`${API_BASE}/orders`, {
+export const createOrderApi = async <T = any>(orderData: object): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/orders`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(orderData),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur création commande');
-  return data;
 };
 
-export const getMyOrdersApi = async (token: string) => {
-  const res = await fetch(`${API_BASE}/orders/my`, {
+export const getMyOrdersApi = async <T = any>(token: string): Promise<T[]> => {
+  return requestJson<T[]>(`${API_BASE}/orders/my`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur chargement commandes');
-  return data;
 };
 
-export const getAllOrdersApi = async (token: string) => {
-  const res = await fetch(`${API_BASE}/orders`, {
+export const getAllOrdersApi = async <T = any>(token: string): Promise<T[]> => {
+  return requestJson<T[]>(`${API_BASE}/orders`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur chargement commandes');
-  return data;
 };
 
-export const updateOrderStatusApi = async (id: string, status: string, token: string) => {
-  const res = await fetch(`${API_BASE}/orders/${id}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ status }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur mise à jour statut');
-  return data;
-};
+export const updateOrderStatusApi = async <T = any>(id: string, status: string, token: string): Promise<T> => {
+  const payload = { status };
+  const statusParam = encodeURIComponent(status);
 
-export const updateProductApi = async (id: string, productData: any, token: string) => {
-  const isFormData = productData instanceof FormData;
-  const res = await fetch(`${API_BASE}/products/${id}`, {
+  return requestJson<T>(`${API_BASE}/orders/${id}/status?status=${statusParam}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' })
+    },
+    body: JSON.stringify(payload),
+  });
+};
+
+export const updateProductApi = async <T = any>(id: string, productData: any, token: string): Promise<T> => {
+  const isFormData = productData instanceof FormData;
+  return requestJson<T>(`${API_BASE}/products/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     },
     body: isFormData ? productData : JSON.stringify(productData),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur mise à jour produit');
-  return data;
 };
 
-// ─── QUOTES (DEVIS) 
+// ─── QUOTES (DEVIS)
 
-export const createQuoteApi = async (quoteData: FormData | object) => {
+export const createQuoteApi = async <T = any>(quoteData: FormData | object): Promise<T> => {
   const isFormData = quoteData instanceof FormData;
-  const res = await fetch(`${API_BASE}/quotes`, {
+  return requestJson<T>(`${API_BASE}/quotes`, {
     method: 'POST',
     headers: isFormData ? {} : { 'Content-Type': 'application/json' },
     body: isFormData ? quoteData : JSON.stringify(quoteData),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur enregistrement devis');
-  return data;
 };
 
-export const getAllQuotesApi = async (token: string) => {
-  const res = await fetch(`${API_BASE}/quotes`, {
+export const getAllQuotesApi = async <T = any>(token: string): Promise<T[]> => {
+  return requestJson<T[]>(`${API_BASE}/quotes`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur chargement devis');
-  return data;
 };
 
-export const getMyQuotesApi = async (token: string) => {
-  const res = await fetch(`${API_BASE}/quotes/my`, {
+export const getMyQuotesApi = async <T = any>(token: string): Promise<T[]> => {
+  return requestJson<T[]>(`${API_BASE}/quotes/my`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur chargement devis');
-  return data;
 };
 
-export const updateQuoteStatusApi = async (
+export const updateQuoteStatusApi = async <T = any>(
   id: string,
   payload: { status?: string; estimatedPrice?: number | null },
   token: string
-) => {
-  const res = await fetch(`${API_BASE}/quotes/${id}/status`, {
+): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/quotes/${id}/status`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur mise à jour devis');
-  return data;
 };
 
-export const getMeApi = async (token: string) => {
-  const res = await fetch(`${API_BASE}/auth/me`, {
+export const getMeApi = async <T = any>(token: string): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Session invalide');
-  return data;
 };
 
-// ─── ADMIN 
+// ─── ADMIN
 
-export const seedAdminApi = async () => {
-  const res = await fetch(`${API_BASE}/admin/seed`, { method: 'POST' });
-  const data = await res.json();
-  return data;
-};
-
-export const getAllUsersApi = async (token: string) => {
-  const res = await fetch(`${API_BASE}/admin/users`, {
+export const getAllUsersApi = async <T = any>(token: string): Promise<T[]> => {
+  return requestJson<T[]>(`${API_BASE}/admin/users`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur chargement utilisateurs');
-  return data;
 };
 
-export const updateUserApi = async (id: string, payload: any, token: string) => {
-  const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+export const updateUserApi = async <T = any>(id: string, payload: any, token: string): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/admin/users/${id}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur mise à jour utilisateur');
-  return data;
 };
 
-export const deleteUserApi = async (id: string, token: string) => {
-  const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+export const deleteUserApi = async <T = any>(id: string, token: string): Promise<T> => {
+  return requestJson<T>(`${API_BASE}/admin/users/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erreur suppression utilisateur');
-  return data;
 };
 
-// ─── LOCAL STORAGE HELPERS 
-
-export const saveSession = (userData: object) => {
-  localStorage.setItem('tifaout_user', JSON.stringify(userData));
-};
-
-export const getSession = () => {
-  const raw = localStorage.getItem('tifaout_user');
-  return raw ? JSON.parse(raw) : null;
-};
-
-export const clearSession = () => {
-  localStorage.removeItem('tifaout_user');
-};
+// ─── AUTH STATE IS MANAGED BY AuthContext ONLY ─────────────────────────────────
+// Any session read/write should go through the app auth context to keep one
+// single source of truth and avoid state drift between pages.

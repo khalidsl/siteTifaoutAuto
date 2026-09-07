@@ -14,7 +14,7 @@ export default function Footer({ navigate }: FooterProps) {
         <div className="lg:col-span-1 space-y-4">
           <div className="flex items-center gap-3">
             <div className="h-11 w-auto flex items-center justify-center shrink-0">
-              <img src="/logo1.png" alt="TIFAOUT AUTO Logo" className="h-full max-h-11 object-contain drop-shadow-md" />
+              <img src="/images/logo-footer.png" alt="TIFAOUT AUTO Logo" className="h-full max-h-11 object-contain drop-shadow-md" />
             </div>
             <div>
               <div className="text-xl font-extrabold tracking-wider text-white font-display">TIFAOUT AUTO</div>
@@ -111,9 +111,9 @@ export default function Footer({ navigate }: FooterProps) {
 
       {/* Bottom bar */}
       <div className="border-t border-slate-900 bg-slate-950 py-4">
-        <div className="max-w-[1440px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <div className="max-w-[500px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
           <p>© 2026 TIFAOUT AUTO — Réparation & Pièces Injection Diesel Agadir Maroc</p>
-          <p className="font-mono text-[11px] text-slate-600">Projet Vitrine & E-Commerce Pro</p>
+          <p className="font-mono text-[11px] text-slate-600"></p>
         </div>
       </div>
     </footer>

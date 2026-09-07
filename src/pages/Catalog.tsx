@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Category, Brand } from '../types';
 import { getCategoryLabel } from '../data/products';
 import { getProductsApi } from '../services/api';
+import { resolveMediaUrl } from '../utils/media';
 
 interface CatalogProps {
   onProductSelect: (id: string) => void;
@@ -36,6 +37,7 @@ interface ApiProduct {
   oldPrice?: number | null;
   stock: number;
   imageUrl?: string;
+  images?: string[];
   compatibleVehicles?: string[];
   description?: string;
   isReconditioned?: boolean;
@@ -95,14 +97,15 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
     .filter(p => !onlyInStock || p.stock > 0)
     .filter(p => {
       if (!search) return true;
-      const q = search.toLowerCase();
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.reference.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
-        (p.compatibleVehicles ?? []).some(c => c.toLowerCase().includes(q)) ||
-        (p.description ?? '').toLowerCase().includes(q)
-      );
+      const terms = search.toLowerCase().split(/[\s,;]+/).map(term => term.trim()).filter(Boolean);
+      const searchableText = [
+        p.name,
+        p.reference,
+        p.brand,
+        ...(p.compatibleVehicles ?? []),
+        p.description ?? '',
+      ].join(' ').toLowerCase();
+      return terms.every(term => searchableText.includes(term));
     });
 
   // Products without a price are pushed to the end regardless of sort direction
@@ -140,9 +143,9 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-6 py-10 flex gap-8">
+      <div className="max-w-[1440px] mx-auto px-6 py-6 lg:h-[calc(100vh-17rem)] lg:min-h-[560px] lg:overflow-hidden flex gap-8">
         {/* ── Sidebar filters ── */}
-        <aside className="hidden lg:flex flex-col gap-6 w-64 shrink-0 bg-white rounded-xl shadow-md border border-slate-200 p-6 self-start">
+        <aside className="hidden lg:flex flex-col gap-6 w-64 shrink-0 bg-white rounded-xl shadow-md border border-slate-200 p-6 self-start h-full overflow-y-auto">
           {/* Category */}
           <div>
             <h3 className="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">Catégorie</h3>
@@ -203,17 +206,18 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
         </aside>
 
         {/* ── Product grid ── */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 lg:h-full lg:overflow-y-auto lg:pr-2">
           {/* Toolbar */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200 lg:sticky lg:top-0 lg:z-10">
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Recherche par référence pièce, marque, véhicule (ex: 0445110369)..."
+                placeholder="Rechercher par nom, référence, marque ou véhicule (ex: Bosch 0445 Peugeot)..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full pl-4 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:border-blue-600 outline-none transition-all"
               />
+
             </div>
             <select
               value={sort}
@@ -277,9 +281,7 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
                     autre: 'https://placehold.co/600x400/f1f5f9/475569?text=Pièce+Diesel',
                   };
                   const rawImg = (p.images && p.images.length > 0) ? p.images[0] : p.imageUrl;
-                  const imgSrc = rawImg
-                    ? (rawImg.startsWith('http') ? rawImg : `http://localhost:5000${rawImg}`)
-                    : (CATEGORY_PLACEHOLDERS[p.category] || PLACEHOLDER);
+                  const imgSrc = resolveMediaUrl(rawImg, CATEGORY_PLACEHOLDERS[p.category] || PLACEHOLDER);
                   const inStock = p.stock > 0;
 
                   return (
@@ -369,3 +371,4 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
     </div>
   );
 }
+  
