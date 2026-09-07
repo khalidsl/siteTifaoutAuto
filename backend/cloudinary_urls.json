@@ -1,9 +1,13 @@
 {
-  "../public/images/logo-header.png": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802838/tifaout-auto-assets/k50rp0suc2yfbothm5sm.png",
-  "../public/images/logo-footer.png": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802839/tifaout-auto-assets/zapfz3h04w4afiwryakn.png",
-  "../public/images/logo-invoice.png": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802840/tifaout-auto-assets/ka53ii0be3nvezt8ntca.png",
-  "../public/images/image-garage.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802841/tifaout-auto-assets/z2h7qvejpcpnl0zrianb.jpg",
-  "../public/images/image-garage-2.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802841/tifaout-auto-assets/awd8mq9azybs5kyxbi7f.jpg",
-  "../public/images/image-garage-3.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802842/tifaout-auto-assets/ahnamk48wpjwygnqmyou.jpg",
-  "../public/images/image-garage-4.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802843/tifaout-auto-assets/klr8kh0li77qt6vfie7c.jpg"
+  "../public/images/logo-header.png": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803616/tifaout-auto-assets/cyzkae0d3tcjriporxia.png",
+  "../public/images/logo-footer.png": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803617/tifaout-auto-assets/mqjpjqqfnrqessspzqub.png",
+  "../public/images/logo-invoice.png": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803618/tifaout-auto-assets/jqypxwvi6yomd2f9klta.png",
+  "../public/images/image-garage.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803619/tifaout-auto-assets/ihicz4z5zfceuawu409x.jpg",
+  "../public/images/image-garage-2.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803620/tifaout-auto-assets/q6oyvsgmk2ug1yz8zedx.jpg",
+  "../public/images/image-garage-3.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803620/tifaout-auto-assets/cam9ermqeph4mceuxe3m.jpg",
+  "../public/images/image-garage-4.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803621/tifaout-auto-assets/tinmti6hi7ytltlnezaq.jpg",
+  "../public/images/image-dci.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803622/tifaout-auto-assets/nnp3vydb0y4qmymh5mwd.jpg",
+  "../public/images/dci-200-with-keyboard-monitor-testing.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803622/tifaout-auto-assets/v8iqzljptprjr0aesxvk.jpg",
+  "../public/images/dci200-travail.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803623/tifaout-auto-assets/qgl7pu3me1hkj58xnzfp.jpg",
+  "../public/images/dci200.jpg": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788803624/tifaout-auto-assets/mp1oiiqef3pyjnixqpma.jpg"
 }

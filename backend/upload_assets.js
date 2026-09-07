@@ -1,4 +1,3 @@
-
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const cloudinary = require('cloudinary').v2;
@@ -17,7 +16,11 @@ const assets = [
   '../public/images/image-garage.jpg',
   '../public/images/image-garage-2.jpg',
   '../public/images/image-garage-3.jpg',
-  '../public/images/image-garage-4.jpg'
+  '../public/images/image-garage-4.jpg',
+  '../public/images/image-dci.jpg',
+  '../public/images/dci-200-with-keyboard-monitor-testing.jpg',
+  '../public/images/dci200-travail.jpg',
+  '../public/images/dci200.jpg',
 ];
 
 async function uploadAssets() {
@@ -31,14 +34,14 @@ async function uploadAssets() {
         result[asset] = res.secure_url;
         console.log('Uploaded: ' + asset + ' -> ' + res.secure_url);
       } catch (err) {
-        console.error('Error uploading ' + asset, err);
+        console.error('Error uploading ' + asset, err.message);
       }
     } else {
       console.error('File not found: ' + fullPath);
     }
   }
-  
-  fs.writeFileSync('backend/cloudinary_urls.json', JSON.stringify(result, null, 2));
+
+  fs.writeFileSync(path.join(__dirname, 'cloudinary_urls.json'), JSON.stringify(result, null, 2));
   console.log('Done! Saved to backend/cloudinary_urls.json');
 }
 
