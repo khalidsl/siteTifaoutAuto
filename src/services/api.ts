@@ -1,7 +1,13 @@
 import type { SessionUser } from '../context/AuthContext';
 
+const formatApiBase = (url?: string): string => {
+  if (!url || !url.trim()) return 'http://localhost:5000/api';
+  const clean = url.trim().replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+};
+
 // API service layer for TIFAOUT AUTO backend
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:5000/api';
+const API_BASE = formatApiBase(import.meta.env.VITE_API_URL as string | undefined);
 
 export interface ProductsResponse<T = unknown> {
   products: T[];

@@ -17,8 +17,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── CORS — whitelist Vite dev + production ─────────────────────
-const ALLOWED_ORIGINS = [
+// ─── CORS — whitelist Vite dev + production + Vercel ─────────────
+const rawAllowed = [
   'http://localhost:5173',
   'http://localhost:8443',
   'http://localhost:4173',
@@ -27,17 +27,29 @@ const ALLOWED_ORIGINS = [
   ...(process.env.FRONTEND_URL || '').split(',').map(origin => origin.trim()).filter(Boolean),
 ];
 
-app.use(cors({
+const ALLOWED_ORIGINS = rawAllowed.map(url => url.replace(/\/+$/, ''));
+
+const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (Postman, mobile, server-to-server)
+    // Allow requests with no origin (Postman, mobile apps, server-to-server)
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin) || (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin))) {
+    const cleanOrigin = origin.replace(/\/+$/, '');
+    if (
+      ALLOWED_ORIGINS.includes(cleanOrigin) ||
+      /\.vercel\.app$/.test(cleanOrigin) ||
+      (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(cleanOrigin))
+    ) {
       return callback(null, true);
     }
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 
