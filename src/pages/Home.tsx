@@ -26,10 +26,10 @@ interface HomeProps {
 }
 
 const HERO_IMAGES = [
-  '/images/image-garage.jpg',
-  '/images/image-garage-2.jpg',
-  '/images/image-garage-3.jpg',
-  '/images/image-garage-4.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802841/tifaout-auto-assets/z2h7qvejpcpnl0zrianb.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802841/tifaout-auto-assets/awd8mq9azybs5kyxbi7f.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802842/tifaout-auto-assets/ahnamk48wpjwygnqmyou.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802843/tifaout-auto-assets/klr8kh0li77qt6vfie7c.jpg',
 ];
 
 const SERVICES = [

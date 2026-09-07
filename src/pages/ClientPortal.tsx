@@ -54,7 +54,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
       console.error('Impossible d’ouvrir la fenêtre de facture.');
       return;
     }
-    const logoUrl = new URL('/images/logo-invoice.png', window.location.href).href;
+    const logoUrl = 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802840/tifaout-auto-assets/ka53ii0be3nvezt8ntca.png';
 
     const escapeHtml = (value: unknown) => String(value ?? '')
       .replace(/&/g, '&amp;') 
@@ -114,7 +114,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
     if (!paidOrders.length) return;
     const invoiceWindow = window.open('', '_blank', 'width=900,height=700');
     if (!invoiceWindow) return;
-    const logoUrl = new URL('/images/logo-invoice.png', window.location.href).href;
+    const logoUrl = 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802840/tifaout-auto-assets/ka53ii0be3nvezt8ntca.png';
     const escapeHtml = (value: unknown) => String(value ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#039;');

@@ -98,7 +98,7 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
         <button onClick={() => navigate('home')} className="flex items-center gap-3 text-left group">
           <div className="h-11 w-auto flex items-center justify-center shrink-0">
             <img
-              src="/images/logo-header.png"
+              src="https://res.cloudinary.com/dgv5kksja/image/upload/v1788802838/tifaout-auto-assets/k50rp0suc2yfbothm5sm.png"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               alt="TIFAOUT AUTO Logo"
               className="h-full max-h-11 object-contain drop-shadow-md"
