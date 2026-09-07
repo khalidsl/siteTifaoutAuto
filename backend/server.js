@@ -26,7 +26,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -47,6 +46,7 @@ app.use('/api/quotes', require('./routes/quoteRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Health check
+app.get('/', (req, res) => res.json({ status: 'OK', message: 'TIFAOUT AUTO API running' }));
 app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'TIFAOUT AUTO API running' }));
 
 // ─── Start HTTP Server immediately for Railway / Cloud hosts ─────
