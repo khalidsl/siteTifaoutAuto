@@ -10,6 +10,8 @@ import {
   FaStar,
   FaPercent,
   FaClockRotateLeft,
+  FaEye,
+  FaEyeSlash,
 } from 'react-icons/fa6';
 
 interface AuthProps {
@@ -25,11 +27,14 @@ export default function Auth({ navigate }: AuthProps) {
 
   // Login state
   const [loginData, setLoginData] = useState({ identifier: '', password: '' });
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register state
   const [regData, setRegData] = useState({
     firstName: '', lastName: '', email: '', phone: '', vehicleBrand: '', password: '', confirm: '',
   });
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirm, setShowRegConfirm] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +88,12 @@ export default function Auth({ navigate }: AuthProps) {
       setSuccessMsg(`Compte créé avec succès ! Connectez-vous maintenant, ${regData.firstName}.`);
       setRegData({ firstName: '', lastName: '', email: '', phone: '', vehicleBrand: '', password: '', confirm: '' });
     } catch (err: any) {
-      setError(err.message || "Erreur lors de l'inscription.");
+      const msg = err.message || "Erreur lors de l'inscription.";
+      if (msg.toLowerCase().includes('email') || msg.toLowerCase().includes('utilis')) {
+        setError("Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -168,14 +178,24 @@ export default function Auth({ navigate }: AuthProps) {
               </div>
               <div>
                 <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Mot de passe</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={loginData.password}
-                  onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                />
+                <div className="relative">
+                  <input
+                    type={showLoginPassword ? 'text' : 'password'}
+                    required
+                    placeholder="••••••••"
+                    value={loginData.password}
+                    onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
+                    className="w-full pl-3 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
+                    title={showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
+                    {showLoginPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+                  </button>
+                </div>
               </div>
               <button
                 type="submit"
@@ -217,11 +237,45 @@ export default function Auth({ navigate }: AuthProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Mot de passe</label>
-                  <input required type="password" placeholder="Min. 6 caractères" value={regData.password} onChange={e => setRegData(p => ({ ...p, password: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                  <div className="relative">
+                    <input
+                      required
+                      type={showRegPassword ? 'text' : 'password'}
+                      placeholder="Min. 6 caractères"
+                      value={regData.password}
+                      onChange={e => setRegData(p => ({ ...p, password: e.target.value }))}
+                      className="w-full pl-3 pr-9 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegPassword(v => !v)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
+                      title={showRegPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    >
+                      {showRegPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Confirmer</label>
-                  <input required type="password" placeholder="••••••••" value={regData.confirm} onChange={e => setRegData(p => ({ ...p, confirm: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                  <div className="relative">
+                    <input
+                      required
+                      type={showRegConfirm ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={regData.confirm}
+                      onChange={e => setRegData(p => ({ ...p, confirm: e.target.value }))}
+                      className="w-full pl-3 pr-9 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegConfirm(v => !v)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
+                      title={showRegConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    >
+                      {showRegConfirm ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <button

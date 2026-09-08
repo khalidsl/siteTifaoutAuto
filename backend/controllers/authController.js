@@ -11,10 +11,25 @@ const generateToken = (id, role) => {
 exports.register = async (req, res) => {
   const { firstName, lastName, email, phone, vehicleBrand, password } = req.body;
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+    const cleanEmail = email ? email.toLowerCase().trim() : '';
+    if (!cleanEmail) {
+      return res.status(400).json({ message: 'Une adresse email est requise.' });
+    }
 
-    const user = await User.create({ firstName, lastName, email, phone, vehicleBrand, password });
+    const userExists = await User.findOne({ email: cleanEmail });
+    if (userExists) {
+      return res.status(400).json({ message: 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser un autre email.' });
+    }
+
+    const user = await User.create({
+      firstName,
+      lastName,
+      email: cleanEmail,
+      phone,
+      vehicleBrand,
+      password,
+    });
+
     res.status(201).json({
       _id: user._id,
       firstName: user.firstName,
@@ -25,8 +40,11 @@ exports.register = async (req, res) => {
       loyaltyPoints: user.loyaltyPoints,
       token: generateToken(user._id, user.role),
     });
-    } catch (error) {
+  } catch (error) {
     console.error('REGISTER ERROR:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser un autre email.' });
+    }
     res.status(500).json({ message: 'Erreur serveur lors de l\'inscription.' });
   }
 };
@@ -38,9 +56,10 @@ exports.login = async (req, res) => {
   const { identifier, password } = req.body;
 
   try {
+    const cleanIdentifier = identifier ? identifier.trim() : '';
     // Check if identifier is email or phone
     const user = await User.findOne({
-      $or: [{ email: identifier }, { phone: identifier }]
+      $or: [{ email: cleanIdentifier.toLowerCase() }, { phone: cleanIdentifier }]
     });
 
     if (!user) return res.status(401).json({ message: 'Identifiant ou mot de passe incorrect.' });
