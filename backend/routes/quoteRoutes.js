@@ -9,13 +9,14 @@ const {
 } = require('../controllers/quoteController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 const { quoteLimiter } = require('../middleware/rateLimiter');
+const logger = require('../utils/logger');
 
 // Middleware d'upload Cloudinary pour la photo du devis (gestion d'erreur incluse)
 const handleQuoteUpload = (req, res, next) => {
   const singleUpload = upload.single('photo');
   singleUpload(req, res, (err) => {
     if (err) {
-      console.error('Erreur Upload Photo Devis:', err.message);
+      logger.error('Erreur Upload Photo Devis:', { error: err.message });
       return res.status(400).json({
         message: err.message || 'Erreur lors du téléchargement de la photo.',
       });

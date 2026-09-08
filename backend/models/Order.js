@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Sequence = require('./Sequence');
 
 const orderSchema = new mongoose.Schema({
   // Guest or registered user
@@ -40,14 +41,16 @@ orderSchema.index({ 'guestInfo.phone': 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 
-// Auto-generate unique order number before save
+// Generate the sequence atomically so concurrent orders cannot share a number.
 orderSchema.pre('save', async function () {
   if (!this.orderNumber) {
     const currentYear = new Date().getFullYear();
-    const count = await this.constructor.countDocuments();
-    const seq = String(count + 1).padStart(4, '0');
-    const random = Math.floor(1000 + Math.random() * 9000);
-    this.orderNumber = `CMD-${currentYear}-${seq}-${random}`;
+    const sequence = await Sequence.findOneAndUpdate(
+      { _id: `order:${currentYear}` },
+      { $inc: { value: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    this.orderNumber = `CMD-${currentYear}-${String(sequence.value).padStart(6, '0')}`;
   }
 });
 

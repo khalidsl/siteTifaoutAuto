@@ -138,8 +138,9 @@ export const getMyOrdersApi = async <T = any>(token: string): Promise<T[]> => {
   });
 };
 
-export const getAllOrdersApi = async <T = any>(token: string): Promise<T[]> => {
-  return requestJson<T[]>(`${API_BASE}/orders`, {
+export const getAllOrdersApi = async <T = any>(token: string, page = 1, limit = 100): Promise<T> => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  return requestJson<T>(`${API_BASE}/orders?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
@@ -185,8 +186,9 @@ export const createQuoteApi = async <T = any>(quoteData: FormData | object, toke
 };
 
 
-export const getAllQuotesApi = async <T = any>(token: string): Promise<T[]> => {
-  return requestJson<T[]>(`${API_BASE}/quotes`, {
+export const getAllQuotesApi = async <T = any>(token: string, page = 1, limit = 100): Promise<T> => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  return requestJson<T>(`${API_BASE}/quotes?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

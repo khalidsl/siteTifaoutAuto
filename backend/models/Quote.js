@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Sequence = require('./Sequence');
 
 const quoteSchema = new mongoose.Schema({
   quoteNumber: { type: String, unique: true },
@@ -39,14 +40,16 @@ quoteSchema.index({ phone: 1 });
 quoteSchema.index({ status: 1 });
 quoteSchema.index({ createdAt: -1 });
 
-// Auto-generate quote number before save (Mongoose 9: no next() in async hooks)
+// Generate the sequence atomically so concurrent quotes cannot share a number.
 quoteSchema.pre('save', async function () {
   if (!this.quoteNumber) {
     const currentYear = new Date().getFullYear();
-    const count = await this.constructor.countDocuments();
-    const seq = String(count + 1).padStart(4, '0');
-    const random = Math.floor(1000 + Math.random() * 9000);
-    this.quoteNumber = `DEV-${currentYear}-${seq}-${random}`;
+    const sequence = await Sequence.findOneAndUpdate(
+      { _id: `quote:${currentYear}` },
+      { $inc: { value: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    this.quoteNumber = `DEV-${currentYear}-${String(sequence.value).padStart(6, '0')}`;
   }
 });
 

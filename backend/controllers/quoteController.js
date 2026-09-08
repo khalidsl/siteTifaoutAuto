@@ -46,8 +46,6 @@ exports.createQuote = async (req, res) => {
     if (req.file) {
       // Cloudinary retourne l'URL dans req.file.path
       photoUrl = req.file.path || req.file.secure_url || `/uploads/${req.file.filename}`;
-    } else if (req.body.photoUrl) {
-      photoUrl = req.body.photoUrl;
     }
 
     const quote = new Quote({
@@ -106,11 +104,7 @@ exports.getAllQuotes = async (req, res) => {
 exports.getMyQuotes = async (req, res) => {
   try {
     const quotes = await Quote.find({
-      $or: [
-        { user: req.user._id },
-        { email: req.user.email },
-        { phone: req.user.phone }
-      ]
+      user: req.user._id,
     }).sort({ createdAt: -1 });
     res.json(quotes);
   } catch (error) {

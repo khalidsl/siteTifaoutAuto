@@ -2,12 +2,20 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 
+const getRefreshTokenSecret = () => {
+  const secret = process.env.REFRESH_TOKEN_SECRET;
+  if (!secret || secret === process.env.JWT_SECRET) {
+    throw new Error('REFRESH_TOKEN_SECRET doit être défini et différent de JWT_SECRET.');
+  }
+  return secret;
+};
+
 const generateAccessToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
 };
 
 const generateRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id }, getRefreshTokenSecret(), { expiresIn: '7d' });
 };
 
 const setRefreshTokenCookie = (res, token) => {
@@ -119,7 +127,7 @@ exports.refreshToken = async (req, res) => {
   if (!token) return res.status(401).json({ message: 'Aucun jeton de rafraîchissement fourni.' });
 
   try {
-    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getRefreshTokenSecret());
     const user = await User.findById(decoded.id).select('-password');
     if (!user) return res.status(401).json({ message: 'Compte introuvable ou désactivé.' });
 

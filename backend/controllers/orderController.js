@@ -146,11 +146,7 @@ exports.getAllOrders = async (req, res) => {
 exports.getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      $or: [
-        { user: req.user._id },
-        { 'guestInfo.email': req.user.email },
-        { 'guestInfo.phone': req.user.phone },
-      ]
+      user: req.user._id,
     }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {

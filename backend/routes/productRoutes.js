@@ -9,6 +9,7 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
+const logger = require('../utils/logger');
 
 // ─── Middleware d'upload flexible (supporte 'image' unique et 'images' multiple) ─
 const handleUpload = (req, res, next) => {
@@ -19,7 +20,7 @@ const handleUpload = (req, res, next) => {
 
   uploadFields(req, res, (err) => {
     if (err) {
-      console.error('Erreur Upload Cloudinary / Multer:', err.message);
+      logger.error('Erreur Upload Cloudinary / Multer:', { error: err.message });
       return res.status(400).json({
         message: err.message || 'Erreur lors du téléchargement de l\'image vers Cloudinary.',
       });

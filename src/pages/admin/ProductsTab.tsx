@@ -75,15 +75,15 @@ export default function ProductsTab({
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="px-3 py-2 bg-emerald-600 text-white font-bold text-xs uppercase rounded hover:bg-emerald-700 transition-colors shadow cursor-pointer">
-            Importer Excel
-            <input type="file" accept=".xlsx,.xls" onChange={onImportProducts} className="hidden" />
+            Importer CSV (Excel)
+            <input type="file" accept=".csv,text/csv" onChange={onImportProducts} className="hidden" />
           </label>
           <button
             type="button"
             onClick={onExportProducts}
             className="px-3 py-2 bg-slate-700 text-white font-bold text-xs uppercase rounded hover:bg-slate-800 transition-colors shadow"
           >
-            Exporter Excel
+            Exporter CSV (Excel)
           </button>
           <button
             type="button"
