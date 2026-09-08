@@ -104,9 +104,10 @@ export const deleteProductApi = async <T = any>(id: string, token: string): Prom
 
 // ─── ORDERS
 
-export const createOrderApi = async <T = any>(orderData: object): Promise<T> => {
+export const createOrderApi = async <T = any>(orderData: object, token?: string): Promise<T> => {
   return requestJson<T>(`${API_BASE}/orders`, {
     method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: JSON.stringify(orderData),
   });
 };

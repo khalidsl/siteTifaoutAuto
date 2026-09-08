@@ -1,4 +1,6 @@
 const Quote = require('../models/Quote');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 // @desc    Create new quote request
 // @route   POST /api/quotes
@@ -18,11 +20,25 @@ exports.createQuote = async (req, res) => {
       partRef,
       serviceNeeded,
       description,
-      userId
     } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ message: 'Le nom et le numéro de téléphone sont obligatoires.' });
+    }
+
+    // Authentification facultative mais sécurisée : ignore tout userId passé dans le body
+    let verifiedUserId = null;
+    if (req.user && req.user._id) {
+      verifiedUserId = req.user._id;
+    } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        if (user) verifiedUserId = user._id;
+      } catch {
+        // Token invalide ou expiré, la demande reste enregistrée en mode invité
+      }
     }
 
     let photoUrl = '';
@@ -47,7 +63,7 @@ exports.createQuote = async (req, res) => {
       serviceNeeded: serviceNeeded || 'Réparation / Reconditionnement',
       description: description || '',
       photoUrl,
-      user: userId || (req.user ? req.user._id : null),
+      user: verifiedUserId,
     });
 
     const created = await quote.save();

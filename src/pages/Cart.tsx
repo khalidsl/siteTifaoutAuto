@@ -85,7 +85,7 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
         },
         items: itemsPayload,
         total: total,
-      });
+      }, user?.token);
 
       setPlacedOrderNumber(created.orderNumber || `CMD-2026-${Date.now().toString().slice(-4)}`);
       setOrderPlaced(true);

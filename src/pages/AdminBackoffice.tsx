@@ -14,7 +14,7 @@ import {
   deleteUserApi,
   createProductApi,
 } from '../services/api';
-import { useAuth, clearSession } from '../context/AuthContext';
+import { useAuth, clearSession, getSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import OrdersTab from './admin/OrdersTab';
 import QuotesTab from './admin/QuotesTab';
@@ -29,6 +29,7 @@ interface AdminBackofficeProps {
 
 export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const { user } = useAuth();
+  const activeUser = user || getSession();
   const { notify } = useToast();
   const [tab, setTab] = useState<'products' | 'orders' | 'quotes' | 'users' | 'repairs'>('products');
   const [productList, setProductList] = useState<any[]>([]);
@@ -62,12 +63,12 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       console.error("Error loading products:", e);
     }
 
-    if (user && user.token) {
+    if (activeUser && activeUser.token) {
       try {
         const [ordersData, quotesData, usersData] = await Promise.all([
-          getAllOrdersApi(user.token).catch(() => []),
-          getAllQuotesApi(user.token).catch(() => []),
-          getAllUsersApi(user.token).catch(() => [])
+          getAllOrdersApi(activeUser.token).catch(() => []),
+          getAllQuotesApi(activeUser.token).catch(() => []),
+          getAllUsersApi(activeUser.token).catch(() => [])
         ]);
         setOrderList(Array.isArray(ordersData) ? ordersData : []);
         setQuoteList(Array.isArray(quotesData) ? quotesData : []);
@@ -81,7 +82,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
 
   useEffect(() => {
     loadAllData();
-  }, [user?.token]);
+  }, [activeUser?.token]);
 
   const confirmAction = (message: string, onConfirm: () => void) => {
     setConfirmDialog({ id: Date.now(), message, onConfirm });
@@ -433,9 +434,9 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
               <span className="text-xs uppercase font-mono text-slate-400">Back-Office Administration</span>
-              {user && (
+              {activeUser && (
                 <span className="px-2 py-0.5 bg-blue-900 text-blue-300 text-[10px] font-bold rounded uppercase ml-2">
-                  Connecté : {user.firstName || user.name || 'Admin'} ({user.role})
+                  Connecté : {activeUser.firstName || activeUser.name || 'Admin'} ({activeUser.role})
                 </span>
               )}
             </div>
@@ -451,7 +452,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
             >
               Voir le Site Public →
             </button>
-            {user ? (
+            {activeUser ? (
               <button
                 onClick={() => {
                   clearSession();
@@ -481,7 +482,6 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
             { id: 'orders', label: ' Commandes Web', count: orderList.length },
             { id: 'quotes', label: ' Devis Reçus', count: quoteList.length },
             { id: 'users', label: ' Comptes & Garagistes', count: usersList.length },
-            { id: 'repairs', label: ' Réparations Atelier', count: repairList.length },
           ].map(t => (
             <button
               key={t.id}
@@ -518,12 +518,6 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
           />
         )}
 
-        {tab === 'repairs' && (
-          <RepairsTab
-            repairList={repairList}
-            updateRepairStatus={updateRepairStatus}
-          />
-        )}
 
         {tab === 'products' && (
           <ProductsTab

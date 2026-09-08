@@ -75,7 +75,7 @@ export default function Auth({ navigate }: AuthProps) {
     }
     setIsLoading(true);
     try {
-      await registerApi({
+      const newUser = await registerApi({
         firstName: regData.firstName,
         lastName: regData.lastName,
         email: regData.email,
@@ -83,10 +83,15 @@ export default function Auth({ navigate }: AuthProps) {
         vehicleBrand: regData.vehicleBrand,
         password: regData.password,
       });
-      // Success: go to login tab with a success message
-      setTab('login');
-      setSuccessMsg(`Compte créé avec succès ! Connectez-vous maintenant, ${regData.firstName}.`);
-      setRegData({ firstName: '', lastName: '', email: '', phone: '', vehicleBrand: '', password: '', confirm: '' });
+
+      // Connexion automatique et redirection immédiate vers l'espace client
+      saveSession(newUser);
+      login(newUser);
+      if (newUser.role === 'admin') {
+        navigate('admin');
+      } else {
+        navigate('client');
+      }
     } catch (err: any) {
       const msg = err.message || "Erreur lors de l'inscription.";
       if (msg.toLowerCase().includes('email') || msg.toLowerCase().includes('utilis')) {

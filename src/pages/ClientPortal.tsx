@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Page, RepairTicket } from '../types';
 import { MOCK_REPAIR_TICKETS } from '../data/mockData';
 import { getMyOrdersApi, getMyQuotesApi } from '../services/api';
-import { useAuth, clearSession } from '../context/AuthContext';
+import { useAuth, clearSession, getSession } from '../context/AuthContext';
 import { resolveMediaUrl } from '../utils/media';
 
 interface ClientPortalProps {
@@ -11,6 +11,7 @@ interface ClientPortalProps {
 
 export default function ClientPortal({ navigate }: ClientPortalProps) {
   const { user, isAuthenticated } = useAuth();
+  const currentUser = user || getSession();
   const [activeTab, setActiveTab] = useState<'orders' | 'quotes' | 'profile'>('orders');
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -19,33 +20,33 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
   // Redirect to login if no real session
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !getSession()) {
       navigate('auth');
     }
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (user && user.token) {
-      getMyOrdersApi(user.token)
+    const token = currentUser?.token;
+    if (token) {
+      getMyOrdersApi(token)
         .then(data => setOrders((Array.isArray(data) ? data : []) as any[]))
         .catch(err => console.error("Error loading orders:", err))
         .finally(() => setIsLoadingOrders(false));
 
-      getMyQuotesApi(user.token)
+      getMyQuotesApi(token)
         .then(data => setQuotes((Array.isArray(data) ? data : []) as any[]))
         .catch(err => console.error("Error loading quotes:", err));
     } else {
       setIsLoadingOrders(false);
     }
-  }, [user]);
+  }, [currentUser?.token]);
 
   // Guard — render nothing while redirecting
-  if (!user || !user.token) return null;
+  if (!currentUser || !currentUser.token) return null;
 
-
-  const fullName = user.firstName ? `${user.firstName} ${user.lastName}` : user.name;
-  const companyInfo = user.vehicleBrand || user.companyName || 'Particulier';
-  const discountRate = user.discountRate ?? 0;
+  const fullName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName}` : (currentUser.name || 'Client');
+  const companyInfo = currentUser.vehicleBrand || currentUser.companyName || 'Particulier';
+  const discountRate = currentUser.discountRate ?? 0;
 
   const printInvoice = (order: any) => {
     if (order.status !== 'Payée') return;
@@ -146,7 +147,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-blue-600 text-white">
-                {user.role === 'admin' ? 'Compte Administrateur' : (discountRate > 0 ? 'Compte Garagiste Pro' : 'Compte Client')}
+                {currentUser.role === 'admin' ? 'Compte Administrateur' : (discountRate > 0 ? 'Compte Garagiste Pro' : 'Compte Client')}
               </span>
               {discountRate > 0 && (
                 <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950 font-mono">
@@ -158,14 +159,14 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
               Espace Client · {fullName}
             </h1>
             <p className="text-slate-400 text-xs mt-1">
-              {companyInfo} · {user.email} · {user.phone}
+              {companyInfo} · {currentUser.email} · {currentUser.phone}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-right">
               <span className="text-[10px] uppercase text-slate-400 block font-semibold">Points de Fidélité</span>
-              <span className="text-xl font-extrabold text-amber-400 font-mono">{user.loyaltyPoints || 0} pts</span>
+              <span className="text-xl font-extrabold text-amber-400 font-mono">{currentUser.loyaltyPoints || 0} pts</span>
             </div>
             <button
               onClick={() => {
@@ -386,11 +387,11 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                 </div>
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-500">Téléphone</label>
-                  <p className="font-semibold text-slate-900 mt-1 font-mono">{user.phone}</p>
+                  <p className="font-semibold text-slate-900 mt-1 font-mono">{currentUser.phone}</p>
                 </div>
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-500">Email</label>
-                  <p className="font-semibold text-slate-900 mt-1">{user.email}</p>
+                  <p className="font-semibold text-slate-900 mt-1">{currentUser.email}</p>
                 </div>
               </div>
             </div>

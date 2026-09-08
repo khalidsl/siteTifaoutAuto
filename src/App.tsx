@@ -4,7 +4,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import StickyPhoneButton from './components/StickyPhoneButton';
 import { MOCK_QUOTES } from './data/mockData';
-import { useAuth } from './context/AuthContext';
+import { useAuth, getSession } from './context/AuthContext';
 
 const Home = lazy(() => import('./pages/Home'));
 const Catalog = lazy(() => import('./pages/Catalog'));
@@ -47,11 +47,12 @@ export default function App() {
   }, [currentPage, selectedProductId]);
 
   const navigate = (page: Page) => {
-    if (page === 'admin' && (!user || user.role !== 'admin')) {
+    const activeUser = user || getSession();
+    if (page === 'admin' && (!activeUser || activeUser.role !== 'admin')) {
       setCurrentPage('auth');
       return;
     }
-    if (page === 'client' && (!user || !user.token)) {
+    if (page === 'client' && (!activeUser || !activeUser.token)) {
       setCurrentPage('auth');
       return;
     }
