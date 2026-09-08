@@ -2,6 +2,7 @@ const Product = require('../models/Product');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('../config/cloudinary');
+const logger = require('../utils/logger');
 
 // ── Helper pour extraire les URLs Cloudinary / Locales des fichiers uploadés ──
 const getUploadedUrls = (req) => {
@@ -42,9 +43,10 @@ const deleteFileOrCloudinary = async (fileUrl) => {
       if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
     }
   } catch (err) {
-    console.warn('Erreur lors de la suppression de l\'ancienne image:', err.message);
+    logger.warn('Erreur lors de la suppression de l\'ancienne image:', { error: err.message });
   }
 };
+
 
 // @desc    Get all products (with optional category & search filters)
 // @route   GET /api/products?category=injecteur&search=bosch&page=1&limit=20
@@ -79,7 +81,7 @@ exports.getProducts = async (req, res) => {
 
     res.json({ products, total, page: safePage, pages: Math.ceil(total / safeLimit) });
   } catch (error) {
-    console.error('getProducts error:', error);
+    logger.error('getProducts error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur lors du chargement des produits.' });
   }
 };
@@ -96,7 +98,7 @@ exports.getProductById = async (req, res) => {
       res.status(404).json({ message: 'Produit introuvable.' });
     }
   } catch (error) {
-    console.error('getProductById error:', error);
+    logger.error('getProductById error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
@@ -159,15 +161,17 @@ exports.createProduct = async (req, res) => {
     });
 
     const created = await product.save();
+    logger.info(`Produit créé avec succès: ${created.name} (${created.reference})`);
     res.status(201).json(created);
   } catch (error) {
-    console.error('createProduct error:', error);
+    logger.error('createProduct error:', { error: error.message });
     if (error.code === 11000) {
       return res.status(400).json({ message: `La référence "${error.keyValue?.reference}" existe déjà.` });
     }
     res.status(500).json({ message: 'Erreur serveur lors de la création du produit.' });
   }
 };
+
 
 // @desc    Update a product / Replace image (PUT / PATCH)
 // @route   PUT /api/products/:id ou PATCH /api/products/:id
@@ -214,7 +218,7 @@ exports.updateProduct = async (req, res) => {
         });
         retainedImages = parsedRetained;
       } catch (e) {
-        console.error('Erreur parsing retainedImages:', e);
+        logger.error('Erreur parsing retainedImages:', { error: e.message });
       }
     }
 
@@ -239,9 +243,10 @@ exports.updateProduct = async (req, res) => {
     product.imageUrl = retainedImages.length > 0 ? retainedImages[0] : '';
 
     const updated = await product.save();
+    logger.info(`Produit mis à jour: ${updated.name} (${updated.reference})`);
     res.json(updated);
   } catch (error) {
-    console.error('updateProduct error:', error);
+    logger.error('updateProduct error:', { error: error.message });
     if (error.code === 11000) {
       return res.status(400).json({ message: `La référence "${error.keyValue?.reference}" existe déjà.` });
     }
@@ -267,10 +272,12 @@ exports.deleteProduct = async (req, res) => {
     }
 
     await Product.deleteOne({ _id: product._id });
+    logger.info(`Produit supprimé: ${product.name} (${product.reference})`);
     res.json({ message: 'Produit supprimé avec succès.' });
   } catch (error) {
-    console.error('deleteProduct error:', error);
+    logger.error('deleteProduct error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur lors de la suppression.' });
   }
 };
+
 

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const logger = require('../utils/logger');
 
 const generateAccessToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
@@ -47,6 +48,7 @@ exports.register = async (req, res) => {
     const refreshToken = generateRefreshToken(user._id);
     setRefreshTokenCookie(res, refreshToken);
 
+    logger.info(`Nouvel utilisateur inscrit: ${user.email} (${user.role})`);
     res.status(201).json({
       _id: user._id,
       firstName: user.firstName,
@@ -58,7 +60,8 @@ exports.register = async (req, res) => {
       token: accessToken,
     });
   } catch (error) {
-    console.error('REGISTER ERROR:', error);
+    logger.error('REGISTER ERROR:', { error: error.message });
+
     if (error.code === 11000) {
       return res.status(400).json({ message: 'Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser un autre email.' });
     }
@@ -88,6 +91,7 @@ exports.login = async (req, res) => {
     const refreshToken = generateRefreshToken(user._id);
     setRefreshTokenCookie(res, refreshToken);
 
+    logger.info(`Connexion réussie: ${user.email} (${user.role})`);
     res.json({
       _id: user._id,
       firstName: user.firstName,
@@ -101,10 +105,11 @@ exports.login = async (req, res) => {
       token: accessToken,
     });
   } catch (error) {
-    console.error(error);
+    logger.error('LOGIN ERROR:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
+
 
 // @desc   Refresh access token
 // @route  POST /api/auth/refresh
@@ -160,7 +165,20 @@ exports.getMe = async (req, res) => {
       createdAt: user.createdAt,
     });
   } catch (error) {
-    console.error(error);
+    logger.error('getMe error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
+
+// @desc   Logout user & clear refresh token cookie
+// @route  POST /api/auth/logout
+// @access Public
+exports.logout = (req, res) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+  res.json({ message: 'Déconnexion réussie.' });
+};
+

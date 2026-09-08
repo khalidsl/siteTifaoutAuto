@@ -29,7 +29,7 @@ export default function RepairsTab({ repairList, updateRepairStatus }: RepairsTa
                 value={rep.status}
                 onChange={e => {
                   const newStatus = e.target.value as RepairTicket['status'];
-                  const perc = newStatus === 'Réceptionné' ? 20 : newStatus === 'Diagnostic' ? 40 : newStatus === 'Nettoyage Ultrasons' ? 60 : newStatus === 'Calibration Banc EPS 200' ? 80 : 100;
+                  const perc = newStatus === 'Réceptionné' ? 20 : newStatus === 'Diagnostic' ? 40 : newStatus === 'Nettoyage Ultrasons' ? 60 : newStatus === 'Calibration Banc DCI 200' ? 80 : 100;
                   updateRepairStatus(rep.id, newStatus, perc);
                 }}
                 className="text-xs bg-white border border-slate-300 rounded px-3 py-2 outline-none font-semibold cursor-pointer"
@@ -37,7 +37,7 @@ export default function RepairsTab({ repairList, updateRepairStatus }: RepairsTa
                 <option value="Réceptionné">1. Réceptionné (20%)</option>
                 <option value="Diagnostic">2. Diagnostic (40%)</option>
                 <option value="Nettoyage Ultrasons">3. Nettoyage (60%)</option>
-                <option value="Calibration Banc EPS 200">4. Calibration Banc EPS 200 (80%)</option>
+                <option value="Calibration Banc DCI 200">4. Calibration Banc DCI 200 (80%)</option>
                 <option value="Prêt à livrer">5. Prêt à livrer (100%)</option>
               </select>
             </div>

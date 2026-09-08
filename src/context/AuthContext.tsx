@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { logoutApi } from '../services/api';
+
 
 export interface SessionUser {
   _id?: string;
@@ -92,7 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: Boolean(user && user.token),
     isAdmin: Boolean(user && user.role === 'admin'),
     login: (nextUser) => setUser(normalizeSessionUser(nextUser)),
-    logout: () => setUser(null),
+    logout: () => {
+      logoutApi();
+      clearSession();
+      setUser(null);
+    },
   }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -117,4 +123,8 @@ export const saveSession = (userData: SessionUser | null) => {
 
 export const getSession = (): SessionUser | null => readStoredUser();
 
-export const clearSession = () => localStorage.removeItem(SESSION_KEY);
+export const clearSession = () => {
+  localStorage.removeItem(SESSION_KEY);
+  logoutApi();
+};
+

@@ -1,6 +1,7 @@
 const Quote = require('../models/Quote');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const logger = require('../utils/logger');
 
 // @desc    Create new quote request
 // @route   POST /api/quotes
@@ -67,9 +68,10 @@ exports.createQuote = async (req, res) => {
     });
 
     const created = await quote.save();
+    logger.info(`Devis créé avec succès: ${created.quoteNumber || created._id}`, { quoteId: created._id });
     res.status(201).json(created);
   } catch (error) {
-    console.error('createQuote error:', error);
+    logger.error('createQuote error:', { error: error.message, stack: error.stack });
     res.status(500).json({ message: 'Erreur lors de la création de la demande de devis.' });
   }
 };
@@ -79,10 +81,21 @@ exports.createQuote = async (req, res) => {
 // @access  Private/Admin
 exports.getAllQuotes = async (req, res) => {
   try {
+    const { page, limit } = req.query;
+    if (page || limit) {
+      const safePage = Math.max(1, parseInt(page, 10) || 1);
+      const safeLimit = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+      const skip = (safePage - 1) * safeLimit;
+      const [quotes, total] = await Promise.all([
+        Quote.find({}).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
+        Quote.countDocuments(),
+      ]);
+      return res.json({ quotes, total, page: safePage, pages: Math.ceil(total / safeLimit) });
+    }
     const quotes = await Quote.find({}).sort({ createdAt: -1 });
     res.json(quotes);
   } catch (error) {
-    console.error('getAllQuotes error:', error);
+    logger.error('getAllQuotes error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
@@ -101,7 +114,7 @@ exports.getMyQuotes = async (req, res) => {
     }).sort({ createdAt: -1 });
     res.json(quotes);
   } catch (error) {
-    console.error('getMyQuotes error:', error);
+    logger.error('getMyQuotes error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
@@ -122,9 +135,11 @@ exports.updateQuoteStatus = async (req, res) => {
     }
 
     const updated = await quote.save();
+    logger.info(`Statut devis mis à jour: ${quote._id} -> ${quote.status}`);
     res.json(updated);
   } catch (error) {
-    console.error('updateQuoteStatus error:', error);
+    logger.error('updateQuoteStatus error:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
+

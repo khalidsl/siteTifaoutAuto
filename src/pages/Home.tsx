@@ -36,7 +36,7 @@ const SERVICES = [
   {
     icon: <FaWrench className="text-xl text-blue-400" />,
     title: "Réparation d'Injecteurs",
-    desc: "Démontage complet, nettoyage ultrasons, remplacement pièces d'usure, calibration et test sur banc Bosch EPS 200. Toutes marques : Bosch, Delphi, Denso, Zexel.",
+    desc: "Démontage complet, nettoyage ultrasons, remplacement pièces d'usure, calibration et test sur banc Bosch DCI 200. Toutes marques : Bosch, Delphi, Denso, Zexel.",
     detail: "Délai : 24 — 48h",
   },
   {
@@ -48,7 +48,7 @@ const SERVICES = [
   {
     icon: <FaGaugeHigh className="text-xl text-blue-400" />,
     title: "Test sur Banc d'Essai",
-    desc: "Diagnostic certifié sur banc Bosch EPS 200 et Delphi. Mesure de débit, pression d'injection, retour carburant, et temps de réponse.",
+    desc: "Diagnostic certifié sur banc Bosch DCI 200 et Delphi. Mesure de débit, pression d'injection, retour carburant, et temps de réponse.",
     detail: "Résultats immédiats",
   },
   {
@@ -169,7 +169,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
             </h1>
 
             <p className="text-base sm:text-lg text-slate-200 font-medium max-w-2xl mb-8 leading-relaxed drop-shadow">
-              Diagnostic certifié sur banc <strong>Bosch EPS 200</strong>, reconditionnement OEM et vente de pièces d'injection diesel. Livraison 24h sur tout le Maroc.
+              Diagnostic certifié sur banc <strong>Bosch DCI 200</strong>, reconditionnement OEM et vente de pièces d'injection diesel. Livraison 24h sur tout le Maroc.
             </p>
 
             {/* Real-time status pill */}
@@ -227,7 +227,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               <ul className="space-y-3 text-xs text-slate-300">
                 <li className="flex items-start gap-2.5">
                   <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
-                  <span>Banc d'essai certifié <strong>Bosch EPS 200</strong> pour injecteurs et pompes HP</span>
+                  <span>Banc d'essai certifié <strong>Bosch DCI 200</strong> pour injecteurs et pompes HP</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
@@ -368,12 +368,12 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               TIFAOUT AUTO est le partenaire privilégié des garagistes, transporteurs et particuliers pour le diagnostic et le reconditionnement d'injecteurs Common Rail et pompes haute pression.
             </p>
             <p className="text-slate-600 text-sm leading-relaxed mb-8">
-              Équipé du banc d'essai certifié <strong>Bosch EPS 200</strong>, notre atelier garantit la mesure et le réglage exacts des débits selon les normes constructeur.
+              Équipé du banc d'essai certifié <strong>Bosch DCI 200</strong>, notre atelier garantit la mesure et le réglage exacts des débits selon les normes constructeur.
             </p>
             
             <div className="grid grid-cols-2 gap-4">
               {[
-                { val: 'Bosch EPS 200', label: 'Banc d\'essai certifié' },
+                { val: 'Bosch DCI 200', label: 'Banc d\'essai certifié' },
                 { val: 'ISO 9001', label: 'Qualité reconditionnement' },
                 { val: 'Spécialiste Agréé', label: 'Bosch / Delphi / Denso' },
                 { val: '24h', label: 'Délai moyen atelier' },

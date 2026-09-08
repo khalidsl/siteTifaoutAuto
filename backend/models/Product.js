@@ -69,5 +69,10 @@ const productSchema = new mongoose.Schema({
 
 // Text index for search
 productSchema.index({ name: 'text', reference: 'text', brand: 'text', description: 'text' });
+productSchema.index({ category: 1, createdAt: -1 });
+productSchema.index({ brand: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Product', productSchema);
+

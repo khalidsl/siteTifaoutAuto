@@ -52,9 +52,10 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
     if (order.status !== 'Payée') return;
     const invoiceWindow = window.open('', '_blank', 'width=900,height=700');
     if (!invoiceWindow) {
-      console.error('Impossible d’ouvrir la fenêtre de facture.');
+      alert('Veuillez autoriser les fenêtres pop-up (fenêtres surgissantes) dans votre navigateur pour afficher la facture.');
       return;
     }
+
     const logoUrl = 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802840/tifaout-auto-assets/ka53ii0be3nvezt8ntca.png';
 
     const escapeHtml = (value: unknown) => String(value ?? '')
@@ -406,7 +407,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
             <div className="bg-slate-800 text-white p-6 flex justify-between items-center border-b border-slate-700">
               <div>
                 <span className="text-xs uppercase font-semibold text-blue-400 tracking-wider">Rapport de Banc d'Essai Certifié</span>
-                <h3 className="font-display text-2xl font-bold uppercase">Bosch EPS 200 · Test ID #9928</h3>
+                <h3 className="font-display text-2xl font-bold uppercase">Bosch DCI 200 · Test ID #9928</h3>
               </div>
               <button
                 onClick={() => setSelectedTicket(null)}

@@ -53,6 +53,12 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
     if (!info.phone.trim()) e.phone = 'Requis';
     if (!info.address.trim()) e.address = 'Requis';
     if (!info.city.trim()) e.city = 'Requis';
+    if (info.email && info.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(info.email.trim())) {
+        e.email = 'Format email invalide';
+      }
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -75,17 +81,18 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
         isGuest: !user,
         user: user?._id || null,
         guestInfo: {
-          firstName: info.firstName,
-          lastName: info.lastName,
-          email: info.email || 'guest@tifaout.ma',
-          phone: info.phone,
-          address: info.address,
-          city: info.city,
+          firstName: info.firstName.trim(),
+          lastName: info.lastName.trim(),
+          email: info.email?.trim() || '',
+          phone: info.phone.trim(),
+          address: info.address.trim(),
+          city: info.city.trim(),
           paymentMethod: info.paymentMethod || 'especes',
         },
         items: itemsPayload,
         total: total,
       }, user?.token);
+
 
       setPlacedOrderNumber(created.orderNumber || `CMD-2026-${Date.now().toString().slice(-4)}`);
       setOrderPlaced(true);

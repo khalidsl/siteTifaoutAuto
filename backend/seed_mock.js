@@ -13,7 +13,7 @@ const mockProducts = [
     oldPrice: 2200,
     imageUrl: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=600&fit=crop&auto=format',
     compatibleVehicles: ['Peugeot 307 2.0 HDi 136ch', 'Citroën C4 2.0 HDi 138ch', 'Ford Focus 2.0 TDCi 136ch', 'Volvo S40 2.0 D 136ch'],
-    description: "Injecteur diesel Common Rail reconditionné à neuf selon les normes Bosch. Chaque injecteur est entièrement démonté, nettoyé par ultrasons, équipé de pièces d'usure neuves, puis calibré et testé sur banc d'essai Bosch EPS 200.",
+    description: "Injecteur diesel Common Rail reconditionné à neuf selon les normes Bosch. Chaque injecteur est entièrement démonté, nettoyé par ultrasons, équipé de pièces d'usure neuves, puis calibré et testé sur banc d'essai Bosch DCI 200.",
     stock: 10,
     isReconditioned: true,
   },

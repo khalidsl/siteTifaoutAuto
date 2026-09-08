@@ -120,9 +120,10 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
         formData.append('photo', selectedFile);
       }
 
-      const created = await createQuoteApi(formData);
+      const created = await createQuoteApi(formData, user?.token);
       if (onAddQuote) onAddQuote(created);
       setSubmittedQuote(created);
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error('Quote submission error:', err);
@@ -570,7 +571,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                     ✓
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Banc Certifié Bosch EPS 200</h4>
+                    <h4 className="font-bold text-slate-900 text-sm">Banc Certifié Bosch DCI 200</h4>
                     <p className="mt-0.5 text-slate-500">Test officiel des débits et temps de réaction de chaque injecteur Common Rail.</p>
                   </div>
                 </div>

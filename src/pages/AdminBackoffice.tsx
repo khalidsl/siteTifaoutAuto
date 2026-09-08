@@ -31,7 +31,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const { user } = useAuth();
   const activeUser = user || getSession();
   const { notify } = useToast();
-  const [tab, setTab] = useState<'products' | 'orders' | 'quotes' | 'users' | 'repairs'>('products');
+  const [tab, setTab] = useState<'products' | 'orders' | 'quotes' | 'users'>('products');
   const [productList, setProductList] = useState<any[]>([]);
   const [orderList, setOrderList] = useState<any[]>([]);
   const [quoteList, setQuoteList] = useState<any[]>([]);
@@ -42,6 +42,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ id: number; message: string; onConfirm: () => void } | null>(null);
 
   // Image previews for add / edit forms
@@ -55,27 +56,36 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   
   const loadAllData = async () => {
     setIsLoading(true);
+    setLoadError(null);
+    let hadError = false;
+
     try {
       const pData = await getProductsApi({ limit: 500 });
       const pList = Array.isArray(pData) ? pData : (pData.products || []);
       setProductList(pList);
     } catch (e) {
       console.error("Error loading products:", e);
+      hadError = true;
     }
 
     if (activeUser && activeUser.token) {
       try {
         const [ordersData, quotesData, usersData] = await Promise.all([
-          getAllOrdersApi(activeUser.token).catch(() => []),
-          getAllQuotesApi(activeUser.token).catch(() => []),
-          getAllUsersApi(activeUser.token).catch(() => [])
+          getAllOrdersApi(activeUser.token).catch((err) => { console.error(err); hadError = true; return []; }),
+          getAllQuotesApi(activeUser.token).catch((err) => { console.error(err); hadError = true; return []; }),
+          getAllUsersApi(activeUser.token).catch((err) => { console.error(err); hadError = true; return []; })
         ]);
-        setOrderList(Array.isArray(ordersData) ? ordersData : []);
-        setQuoteList(Array.isArray(quotesData) ? quotesData : []);
+        setOrderList(Array.isArray(ordersData) ? ordersData : ((ordersData as any)?.orders || []));
+        setQuoteList(Array.isArray(quotesData) ? quotesData : ((quotesData as any)?.quotes || []));
         setUsersList(Array.isArray(usersData) ? usersData : []);
       } catch (e) {
         console.error("Error loading admin data:", e);
+        hadError = true;
       }
+    }
+
+    if (hadError && productList.length === 0 && orderList.length === 0) {
+      setLoadError("Certaines données n'ont pas pu être chargées depuis le serveur.");
     }
     setIsLoading(false);
   };
@@ -83,6 +93,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   useEffect(() => {
     loadAllData();
   }, [activeUser?.token]);
+
 
   const confirmAction = (message: string, onConfirm: () => void) => {
     setConfirmDialog({ id: Date.now(), message, onConfirm });
@@ -475,8 +486,21 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       </div>
 
       <div className="max-w-[1440px] mx-auto px-6 mt-8">
+        {loadError && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between text-xs">
+            <span>⚠️ {loadError}</span>
+            <button
+              onClick={loadAllData}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded shadow transition"
+            >
+              Réactualiser
+            </button>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div className="flex border-b border-slate-300 mb-8 bg-white rounded-t-xl px-4 shadow-sm overflow-x-auto">
+
           {[
             { id: 'products', label: ' Catalogue Produits', count: productList.length },
             { id: 'orders', label: ' Commandes Web', count: orderList.length },

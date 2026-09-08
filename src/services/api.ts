@@ -17,13 +17,24 @@ export interface ProductsResponse<T = unknown> {
 }
 
 const requestJson = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const customHeaders = (options.headers as Record<string, string>) ?? {};
+
+  const headers: Record<string, string> = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...customHeaders,
+  };
+
+  if (isFormData) {
+    delete headers['Content-Type'];
+  }
+
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...((options.headers as Record<string, string>) ?? {}),
-    },
+    credentials: 'include',
     ...options,
+    headers,
   });
+
 
   const contentType = response.headers.get('content-type') || '';
   const data = contentType.includes('application/json') ? await response.json().catch(() => null) : await response.text().catch(() => null);
@@ -44,6 +55,15 @@ export const loginApi = async (identifier: string, password: string): Promise<Se
     body: JSON.stringify({ identifier, password }),
   });
 };
+
+export const logoutApi = async (): Promise<void> => {
+  try {
+    await requestJson(`${API_BASE}/auth/logout`, { method: 'POST' });
+  } catch {
+    // Ignore network errors on logout
+  }
+};
+
 
 export const registerApi = async (payload: {
   firstName: string;
@@ -151,14 +171,19 @@ export const updateProductApi = async <T = any>(id: string, productData: any, to
 
 // ─── QUOTES (DEVIS)
 
-export const createQuoteApi = async <T = any>(quoteData: FormData | object): Promise<T> => {
+export const createQuoteApi = async <T = any>(quoteData: FormData | object, token?: string): Promise<T> => {
   const isFormData = quoteData instanceof FormData;
+  const headers: Record<string, string> = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
   return requestJson<T>(`${API_BASE}/quotes`, {
     method: 'POST',
-    headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+    headers,
     body: isFormData ? quoteData : JSON.stringify(quoteData),
   });
 };
+
 
 export const getAllQuotesApi = async <T = any>(token: string): Promise<T[]> => {
   return requestJson<T[]>(`${API_BASE}/quotes`, {

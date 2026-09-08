@@ -8,6 +8,7 @@ const {
   updateQuoteStatus
 } = require('../controllers/quoteController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
+const { quoteLimiter } = require('../middleware/rateLimiter');
 
 // Middleware d'upload Cloudinary pour la photo du devis (gestion d'erreur incluse)
 const handleQuoteUpload = (req, res, next) => {
@@ -23,8 +24,9 @@ const handleQuoteUpload = (req, res, next) => {
   });
 };
 
-// Route publique pour soumettre une demande de devis (avec photo optionnelle)
-router.route('/').post(handleQuoteUpload, createQuote);
+// Route publique pour soumettre une demande de devis (avec photo optionnelle + rate limiter)
+router.route('/').post(quoteLimiter, handleQuoteUpload, createQuote);
+
 
 // Route admin pour récupérer tous les devis
 router.route('/').get(protect, adminOnly, getAllQuotes);

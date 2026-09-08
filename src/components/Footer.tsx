@@ -27,7 +27,7 @@ export default function Footer({ navigate }: FooterProps) {
             </div>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Société spécialisée dans la réparation, la révision sur banc d'essai certifié Bosch EPS 200 et la vente de pièces d'injection diesel au Maroc.
+            Société spécialisée dans la réparation, la révision sur banc d'essai certifié Bosch DCI 200 et la vente de pièces d'injection diesel au Maroc.
           </p>
           <div className="flex flex-wrap gap-1.5 pt-2">
             {['Bosch', 'Delphi', 'Denso', 'Zexel'].map(b => (

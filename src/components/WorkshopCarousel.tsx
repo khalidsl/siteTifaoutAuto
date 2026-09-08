@@ -20,7 +20,7 @@ const SLIDES: Slide[] = [
   {
     id: 2,
     url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803622/tifaout-auto-assets/v8iqzljptprjr0aesxvk.jpg',
-    title: 'Banc Officiel Bosch EPS 200',
+    title: 'Banc Officiel Bosch DCI 200',
     subtitle: 'Calibration en temps réel de 250 à 1800 bar selon spécifications OEM',
     badge: 'BANC CERTIFIÉ BOSCH',
   },

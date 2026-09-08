@@ -3,7 +3,6 @@ import type { Page, CartItem, QuoteRequest as QuoteRequestType } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import StickyPhoneButton from './components/StickyPhoneButton';
-import { MOCK_QUOTES } from './data/mockData';
 import { useAuth, getSession } from './context/AuthContext';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -21,7 +20,8 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [catalogCategory, setCatalogCategory] = useState<string>('all');
-  const [_quotes, setQuotes] = useState<QuoteRequestType[]>(MOCK_QUOTES);
+  const [_quotes, setQuotes] = useState<QuoteRequestType[]>([]);
+
 
   // Cart with localStorage persistence
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -173,7 +173,23 @@ export default function App() {
           {currentPage === 'contact' && (
             <Contact navigate={navigate} />
           )}
+          {(!['home', 'catalog', 'cart', 'devis', 'client', 'admin', 'auth', 'contact'].includes(currentPage) || (currentPage === 'product' && !selectedProductId)) && (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+              <span className="text-6xl font-black text-blue-600 mb-2 font-display">404</span>
+              <h2 className="text-2xl font-bold uppercase tracking-tight text-slate-800 mb-2">Page introuvable</h2>
+              <p className="text-sm text-slate-500 max-w-md mb-6">
+                La page ou la pièce demandée n'existe pas ou a été déplacée.
+              </p>
+              <button
+                onClick={() => navigate('home')}
+                className="rounded-xl bg-blue-600 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-blue-700 shadow"
+              >
+                Retour à l'accueil
+              </button>
+            </div>
+          )}
         </Suspense>
+
       </main>
 
       <Footer navigate={navigate} />

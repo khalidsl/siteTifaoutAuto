@@ -25,7 +25,7 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    const orderIsGuest = isGuest !== false;
+    const orderIsGuest = verifiedUserId ? false : (isGuest !== false);
     if (!orderIsGuest && !verifiedUserId) {
       return res.status(401).json({
         message: 'Authentification requise pour passer une commande avec votre compte client.',
@@ -57,6 +57,14 @@ exports.createOrder = async (req, res) => {
       if (!Number.isFinite(realPrice) || realPrice < 0) {
         return res.status(400).json({ message: `Prix invalide pour le produit ${product.name}.` });
       }
+
+      // Vérification immédiate de la disponibilité du stock
+      if (product.stock !== undefined && product.stock !== null && product.stock < qty) {
+        return res.status(400).json({
+          message: `Stock insuffisant pour "${product.name}". Quantité en stock : ${product.stock}, demandée : ${qty}.`,
+        });
+      }
+
 
       verifiedItems.push({
         productId: product._id,
@@ -112,6 +120,17 @@ exports.createOrder = async (req, res) => {
 // @access Private/Admin
 exports.getAllOrders = async (req, res) => {
   try {
+    const { page, limit } = req.query;
+    if (page || limit) {
+      const safePage = Math.max(1, parseInt(page, 10) || 1);
+      const safeLimit = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+      const skip = (safePage - 1) * safeLimit;
+      const [orders, total] = await Promise.all([
+        Order.find({}).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
+        Order.countDocuments(),
+      ]);
+      return res.json({ orders, total, page: safePage, pages: Math.ceil(total / safeLimit) });
+    }
     const orders = await Order.find({}).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
@@ -119,6 +138,7 @@ exports.getAllOrders = async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur lors du chargement des commandes.' });
   }
 };
+
 
 // @desc   Get orders for logged-in user
 // @route  GET /api/orders/my
@@ -159,9 +179,10 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: 'Commande introuvable.' });
     }
 
-    const stockAdjusted = existingOrder.stockAdjusted !== undefined ? existingOrder.stockAdjusted : true;
+    const stockAdjusted = Boolean(existingOrder.stockAdjusted);
     const shouldDeductStock = nextStatus === 'Payée' && !stockAdjusted;
-    const shouldRestoreStock = nextStatus === 'Retour' && stockAdjusted;
+    const shouldRestoreStock = (nextStatus === 'Retour' || nextStatus === 'Annulé') && stockAdjusted;
+
 
     // Déduction / Restauration atomique avec support de transaction Mongoose
     if (shouldDeductStock || shouldRestoreStock) {

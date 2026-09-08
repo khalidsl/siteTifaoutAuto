@@ -69,7 +69,7 @@ export interface RepairTicket {
   vehicle: string;
   depositDate: string;
   estimatedCompletion: string;
-  status: 'Réceptionné' | 'Diagnostic' | 'Nettoyage Ultrasons' | 'Calibration Banc EPS 200' | 'Prêt à livrer';
+  status: 'Réceptionné' | 'Diagnostic' | 'Nettoyage Ultrasons' | 'Calibration Banc DCI 200' | 'Prêt à livrer';
   progressPercentage: number;
   technicianNotes: string;
   testReportAvailable: boolean;
