@@ -83,7 +83,7 @@ export default function ProductsTab({
             onClick={onExportProducts}
             className="px-3 py-2 bg-slate-700 text-white font-bold text-xs uppercase rounded hover:bg-slate-800 transition-colors shadow"
           >
-            Exporter CSV (Excel)
+            Exporter Excel
           </button>
           <button
             type="button"

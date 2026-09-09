@@ -21,68 +21,11 @@ import QuotesTab from './admin/QuotesTab';
 import ProductsTab from './admin/ProductsTab';
 import UsersTab from './admin/UsersTab';
 import RepairsTab from './admin/RepairsTab';
+import { downloadExcel, parseCsv } from '../utils/spreadsheet';
 
 interface AdminBackofficeProps {
   navigate: (page: Page) => void;
 }
-
-const csvCell = (value: unknown) => {
-  const text = String(value ?? '');
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
-
-const downloadCsv = (rows: Record<string, unknown>[], filename: string) => {
-  const headers = Object.keys(rows[0] || {});
-  const csv = [
-    headers.map(csvCell).join(','),
-    ...rows.map(row => headers.map(header => csvCell(row[header])).join(',')),
-  ].join('\r\n');
-  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-};
-
-const parseCsv = (text: string): Record<string, string>[] => {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = '';
-  let quoted = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-    const nextCharacter = text[index + 1];
-    if (character === '"' && quoted && nextCharacter === '"') {
-      cell += '"';
-      index += 1;
-    } else if (character === '"') {
-      quoted = !quoted;
-    } else if (character === ',' && !quoted) {
-      row.push(cell);
-      cell = '';
-    } else if ((character === '\n' || character === '\r') && !quoted) {
-      if (character === '\r' && nextCharacter === '\n') index += 1;
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = '';
-    } else {
-      cell += character;
-    }
-  }
-  if (cell || row.length) {
-    row.push(cell);
-    rows.push(row);
-  }
-
-  const headers = (rows.shift() || []).map(header => header.trim());
-  return rows.filter(values => values.some(Boolean)).map(values => Object.fromEntries(
-    headers.map((header, index) => [header, values[index] || ''])
-  ));
-};
 
 export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const { user } = useAuth();
@@ -176,7 +119,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       "Type Client": ord.isGuest ? 'Invité' : 'Inscrit'
     }));
 
-    downloadCsv(dataToExport, `Commandes_TIFAOUT_AUTO_${new Date().toISOString().slice(0, 10)}.csv`);
+    void downloadExcel(dataToExport, `Commandes_TIFAOUT_AUTO_${new Date().toISOString().slice(0, 10)}.xlsx`);
     notify('Export Excel des commandes prêt.', 'success');
   };
 
@@ -200,7 +143,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       "Prix Estimé (MAD)": q.estimatedPrice || ''
     }));
 
-    downloadCsv(dataToExport, `Devis_TIFAOUT_AUTO_${new Date().toISOString().slice(0, 10)}.csv`);
+    void downloadExcel(dataToExport, `Devis_TIFAOUT_AUTO_${new Date().toISOString().slice(0, 10)}.xlsx`);
     notify('Export Excel des devis prêt.', 'success');
   };
 
@@ -226,7 +169,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       imageUrl: product.imageUrl || '',
     }));
 
-    downloadCsv(dataToExport, `Produits_TIFAOUT_AUTO_${new Date().toISOString().slice(0, 10)}.csv`);
+    void downloadExcel(dataToExport, `Produits_TIFAOUT_AUTO_${new Date().toISOString().slice(0, 10)}.xlsx`);
     notify(`${dataToExport.length} produit(s) exporté(s).`, 'success');
   };
 
