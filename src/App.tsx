@@ -101,6 +101,9 @@ export default function App() {
     setQuotes(prev => [newQuote, ...prev]);
   };
 
+  const knownPages: Page[] = ['home', 'catalog', 'product', 'cart', 'devis', 'client', 'admin', 'auth', 'contact'];
+  const shouldShowNotFound = !knownPages.includes(currentPage) || (currentPage === 'product' && !selectedProductId);
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 selection:bg-blue-600 selection:text-white">
       <Header
@@ -173,7 +176,7 @@ export default function App() {
           {currentPage === 'contact' && (
             <Contact navigate={navigate} />
           )}
-          {(!['home', 'catalog', 'cart', 'devis', 'client', 'admin', 'auth', 'contact'].includes(currentPage) || (currentPage === 'product' && !selectedProductId)) && (
+          {shouldShowNotFound && (
             <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
               <span className="text-6xl font-black text-blue-600 mb-2 font-display">404</span>
               <h2 className="text-2xl font-bold uppercase tracking-tight text-slate-800 mb-2">Page introuvable</h2>
