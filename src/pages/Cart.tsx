@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Page, CartItem, GuestInfo } from '../types';
 import { createOrderApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { buildOrderPayload, calculateOrderTotals } from '../utils/order';
 
 interface CartProps {
   cart: CartItem[];
@@ -42,9 +43,7 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
     }
   }, [user]);
 
-  const subtotal = cart.reduce((s, i) => s + (i.product.price || 0) * i.qty, 0);
-  const shipping = subtotal > 2000 ? 0 : 50;
-  const total = subtotal + shipping;
+  const { subtotal, shipping, total } = calculateOrderTotals(cart);
 
   const validate = () => {
     const e: Partial<GuestInfo> = {};
@@ -69,29 +68,10 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
     setSubmitError('');
 
     try {
-      const itemsPayload = cart.map(item => ({
-        productId: item.product.id || item.product._id,
-        productName: item.product.name,
-        productRef: item.product.reference || item.product.ref || '',
-        qty: item.qty,
-        price: item.product.price || 0,
-      }));
-
-      const created = await createOrderApi({
-        isGuest: !user,
-        user: user?._id || null,
-        guestInfo: {
-          firstName: info.firstName.trim(),
-          lastName: info.lastName.trim(),
-          email: info.email?.trim() || '',
-          phone: info.phone.trim(),
-          address: info.address.trim(),
-          city: info.city.trim(),
-          paymentMethod: info.paymentMethod || 'especes',
-        },
-        items: itemsPayload,
-        total: total,
-      }, user?.token);
+      const created = await createOrderApi(
+        buildOrderPayload(cart, info, !user),
+        user?.token,
+      );
 
 
       setPlacedOrderNumber(created.orderNumber || `CMD-2026-${Date.now().toString().slice(-4)}`);

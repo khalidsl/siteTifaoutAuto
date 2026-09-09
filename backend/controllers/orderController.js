@@ -203,6 +203,21 @@ exports.updateOrderStatus = async (req, res) => {
       try {
         session = await mongoose.startSession();
         await session.withTransaction(async () => {
+          const nextStockAdjusted = shouldRestoreStock ? false : shouldDeductStock ? true : stockAdjusted;
+          const claimedOrder = await Order.findOneAndUpdate(
+            {
+              _id: orderId,
+              stockAdjusted,
+              status: existingOrder.status,
+            },
+            { $set: { status: nextStatus, stockAdjusted: nextStockAdjusted } },
+            { session, new: true }
+          );
+
+          if (!claimedOrder) {
+            throw new Error('La commande a déjà été mise à jour. Rechargez la liste des commandes.');
+          }
+
           for (const item of existingOrder.items || []) {
             if (!item.productId || !Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0) continue;
             const updatedProduct = await Product.findOneAndUpdate(
@@ -219,12 +234,6 @@ exports.updateOrderStatus = async (req, res) => {
             }
           }
 
-          const nextStockAdjusted = shouldRestoreStock ? false : shouldDeductStock ? true : stockAdjusted;
-          await Order.findByIdAndUpdate(
-            orderId,
-            { $set: { status: nextStatus, stockAdjusted: nextStockAdjusted } },
-            { session }
-          );
         });
       } catch (transErr) {
         // Détecte si le moteur ne supporte pas les transactions (ex: standalone local)
@@ -242,6 +251,21 @@ exports.updateOrderStatus = async (req, res) => {
       if (!transactionSupported) {
         const rollbackActions = [];
         try {
+          const nextStockAdjusted = shouldRestoreStock ? false : shouldDeductStock ? true : stockAdjusted;
+          const claimedOrder = await Order.findOneAndUpdate(
+            {
+              _id: orderId,
+              stockAdjusted,
+              status: existingOrder.status,
+            },
+            { $set: { status: nextStatus, stockAdjusted: nextStockAdjusted } },
+            { new: true }
+          );
+
+          if (!claimedOrder) {
+            return res.status(409).json({ message: 'La commande a déjà été mise à jour. Rechargez la liste des commandes.' });
+          }
+
           for (const item of existingOrder.items || []) {
             if (!item.productId || !Number.isFinite(Number(item.qty)) || Number(item.qty) <= 0) continue;
             const updated = await Product.findOneAndUpdate(
@@ -258,6 +282,10 @@ exports.updateOrderStatus = async (req, res) => {
               for (const rb of rollbackActions) {
                 await Product.findByIdAndUpdate(rb.productId, { $inc: { stock: -rb.qty } });
               }
+              await Order.findOneAndUpdate(
+                { _id: orderId, stockAdjusted: nextStockAdjusted, status: nextStatus },
+                { $set: { stockAdjusted, status: existingOrder.status } }
+              );
               return res.status(409).json({
                 message: `Stock insuffisant pour ${item.productName || 'un produit'}.`,
               });
@@ -265,12 +293,7 @@ exports.updateOrderStatus = async (req, res) => {
             rollbackActions.push({ productId: item.productId, qty: stockDelta * Number(item.qty) });
           }
 
-          const nextStockAdjusted = shouldRestoreStock ? false : shouldDeductStock ? true : stockAdjusted;
-          const updatedOrder = await Order.findByIdAndUpdate(
-            orderId,
-            { $set: { status: nextStatus, stockAdjusted: nextStockAdjusted } },
-            { returnDocument: 'after', runValidators: false }
-          );
+          const updatedOrder = await Order.findById(orderId);
           return res.json(updatedOrder);
         } catch (fbErr) {
           logger.error('Erreur mise à jour stock fallback:', { error: fbErr.message });

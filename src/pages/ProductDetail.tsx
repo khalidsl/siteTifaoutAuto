@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Page, CartItem } from '../types';
 import { getCategoryLabel } from '../data/products';
 import { getProductByIdApi, getProductsApi } from '../services/api';
@@ -23,6 +23,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
+  const relatedRailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,10 +37,10 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
           
           // Fetch related products (same category)
           try {
-            const relatedData = await getProductsApi({ category: data.category, limit: 4 });
+            const relatedData = await getProductsApi({ category: data.category, limit: 20 });
             const list = Array.isArray(relatedData) ? relatedData : (relatedData.products ?? []);
             if (!cancelled) {
-              setRelated(list.filter((p: any) => p._id !== data._id).slice(0, 3));
+              setRelated(list.filter((p: any) => p._id !== data._id).slice(0, 8));
             }
           } catch (e) {
             // ignore related fetch error
@@ -57,10 +58,43 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
     loadProduct();
     setQty(1); // reset qty on product change
     setActiveImg(0); // reset image index
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     
     return () => { cancelled = true; };
   }, [productId]);
+
+  useEffect(() => {
+    if (related.length <= 3) return;
+
+    const rail = relatedRailRef.current;
+    if (!rail) return;
+
+    let paused = false;
+    const advance = () => {
+      if (paused) return;
+      const firstCard = rail.firstElementChild as HTMLElement | null;
+      if (!firstCard) return;
+      const gap = Number.parseFloat(getComputedStyle(rail).columnGap || getComputedStyle(rail).gap || '0');
+      const nextPosition = rail.scrollLeft + firstCard.offsetWidth + gap;
+      const reachedEnd = nextPosition >= rail.scrollWidth - rail.clientWidth - 4;
+      rail.scrollTo({ left: reachedEnd ? 0 : nextPosition, behavior: 'smooth' });
+    };
+
+    const pause = () => { paused = true; };
+    const resume = () => { paused = false; };
+    rail.addEventListener('mouseenter', pause);
+    rail.addEventListener('mouseleave', resume);
+    rail.addEventListener('focusin', pause);
+    rail.addEventListener('focusout', resume);
+    const timer = window.setInterval(advance, 3500);
+
+    return () => {
+      window.clearInterval(timer);
+      rail.removeEventListener('mouseenter', pause);
+      rail.removeEventListener('mouseleave', resume);
+      rail.removeEventListener('focusin', pause);
+      rail.removeEventListener('focusout', resume);
+    };
+  }, [related.length]);
 
   if (loading) {
     return (
@@ -128,9 +162,16 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
   };
 
   const handleAdd = () => {
+    if (!inStock) return;
     onAddToCart({ product: cartProduct as any, qty });
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
+  };
+
+  const handleDirectOrder = () => {
+    if (!inStock) return;
+    onAddToCart({ product: cartProduct as any, qty });
+    navigate('cart');
   };
 
   const savings = product.oldPrice ? product.oldPrice - product.price : 0;
@@ -145,11 +186,18 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 pt-28 pb-16">
+    <div className="min-h-screen bg-slate-100 pt-24 pb-16">
       {/* Breadcrumb */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-[1440px] mx-auto px-6 h-12 flex items-center gap-2 text-xs text-slate-500 font-semibold overflow-x-auto whitespace-nowrap scrollbar-hide">
-          <button onClick={() => navigate('home')} className="hover:text-blue-600">Accueil</button>
+          <button
+            onClick={() => window.history.back()}
+            aria-label="Retourner à la page précédente"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-bold text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition-colors"
+          >
+            <span aria-hidden="true" className="text-base leading-none">←</span>
+            Retour
+          </button>
           <span>/</span>
           <button onClick={() => navigate('catalog')} className="hover:text-blue-600">Catalogue</button>
           <span>/</span>
@@ -159,14 +207,14 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
 
       <div className="max-w-[1440px] mx-auto px-6 py-10">
         {/* Main Product Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8 grid lg:grid-cols-2 gap-12 mb-12">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 sm:p-6 lg:p-8 grid lg:grid-cols-[minmax(0,1.05fr)_minmax(380px,0.95fr)] gap-8 lg:gap-12 mb-8">
           {/* Images */}
           <div>
-            <div className="relative rounded-2xl overflow-hidden bg-slate-900/5 border border-slate-200 h-[420px] mb-4 group flex items-center justify-center">
+            <div className="relative rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 aspect-[4/3] min-h-[280px] max-h-[520px] mb-4 group flex items-center justify-center">
               <img
                 src={images[activeImg] || defaultImg}
                 alt={`${product.name} - Vue ${activeImg + 1}`}
-                className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-full object-contain p-3 sm:p-6 transition-transform duration-300 group-hover:scale-[1.03]"
                 onError={e => { (e.target as HTMLImageElement).src = defaultImg; }}
               />
               
@@ -228,7 +276,8 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
-                    className={`relative w-24 h-24 rounded-xl border-2 overflow-hidden bg-slate-50 transition-all flex-shrink-0 ${
+                    aria-label={`Afficher l'image ${i + 1}`}
+                    className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 overflow-hidden bg-slate-50 transition-all flex-shrink-0 ${
                       activeImg === i 
                         ? 'border-blue-600 ring-2 ring-blue-600/30 scale-105 shadow-md' 
                         : 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-400'
@@ -250,7 +299,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
           </div>
 
           {/* Details */}
-          <div className="flex flex-col justify-between">
+          <div className="flex flex-col justify-between min-w-0">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-blue-600 mb-2 tracking-wider">
                 <span>{getCategoryLabel(product.category)}</span>
@@ -258,7 +307,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                 <span className="font-mono text-slate-500">Réf. {product.reference}</span>
               </div>
 
-              <h1 className="font-display text-4xl font-extrabold uppercase text-slate-900 mb-3">
+              <h1 className="font-display text-3xl sm:text-4xl lg:text-[2.65rem] leading-[0.95] font-extrabold uppercase text-slate-900 mb-4 max-w-2xl">
                 {product.name} {product.brand ? `- ${product.brand}` : ''}
               </h1>
 
@@ -271,8 +320,8 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
               </div>
 
               {/* Price */}
-              <div className="flex items-baseline gap-4 mb-4">
-                <span className="font-display text-5xl font-extrabold text-slate-900">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
+                <span className="font-display text-4xl sm:text-5xl font-extrabold text-slate-900">
                   {product.price != null ? product.price.toLocaleString('fr-MA') : 'Sur demande'}
                 </span>
                 {product.price != null && <span className="text-xl font-bold text-slate-500">MAD</span>}
@@ -299,37 +348,52 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
             </div>
 
             {/* Actions */}
-            <div className="space-y-3 pt-4 border-t border-slate-200 mt-4">
-              <div className="flex gap-3">
-                <div className="flex items-center border border-slate-300 rounded bg-slate-50">
-                  <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-10 h-10 text-lg font-bold text-slate-600 hover:text-slate-900">−</button>
+            <div className="space-y-3 pt-5 border-t border-slate-200 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex items-center justify-between border border-slate-300 rounded-lg bg-slate-50 sm:w-32">
+                  <button aria-label="Diminuer la quantité" onClick={() => setQty(q => Math.max(1, q - 1))} className="w-10 h-11 text-lg font-bold text-slate-600 hover:text-slate-900">−</button>
                   <span className="w-10 text-center font-bold text-sm font-mono">{qty}</span>
-                  <button onClick={() => setQty(q => q + 1)} className="w-10 h-10 text-lg font-bold text-slate-600 hover:text-slate-900">+</button>
+                  <button aria-label="Augmenter la quantité" onClick={() => setQty(q => Math.min(Number(product.stock) || q + 1, q + 1))} className="w-10 h-11 text-lg font-bold text-slate-600 hover:text-slate-900">+</button>
                 </div>
 
                 <button
                   onClick={handleAdd}
-                  disabled={!inStock && !product.remarque}
-                  className="flex-1 py-3 text-xs font-extrabold tracking-widest uppercase rounded bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white shadow transition-all"
+                  disabled={!inStock}
+                  className="flex-1 min-h-11 py-3 text-xs font-extrabold tracking-widest uppercase rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white shadow transition-all"
                 >
                   {addedFeedback ? '✓ Ajouté au panier' : (!inStock && !product.remarque ? 'Rupture de stock' : 'Ajouter au Panier')}
                 </button>
               </div>
 
               <button
-                onClick={() => { onAddToCart({ product: cartProduct as any, qty }); navigate('cart'); }}
-                disabled={!inStock && !product.remarque}
-                className="w-full py-3.5 text-xs font-extrabold tracking-widest uppercase rounded bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 shadow transition-colors"
+                onClick={handleDirectOrder}
+                disabled={!inStock}
+                className="w-full min-h-12 py-3.5 text-xs font-extrabold tracking-widest uppercase rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 shadow transition-colors"
               >
                 Commander directement (Invité Sans Compte) →
               </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 text-center">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
+                <span className="block text-blue-600 text-lg font-bold">24h</span>
+                <span className="text-[10px] font-bold uppercase text-slate-500">Expédition rapide</span>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
+                <span className="block text-blue-600 text-lg font-bold">✓</span>
+                <span className="text-[10px] font-bold uppercase text-slate-500">Pièce contrôlée</span>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
+                <span className="block text-blue-600 text-lg font-bold">MAD</span>
+                <span className="text-[10px] font-bold uppercase text-slate-500">Paiement a la livraison</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Compatibility Section */}
         {(product.compatibleVehicles || []).length > 0 && (
-          <div className="bg-white rounded-xl shadow-md border border-slate-200 p-8 mb-12">
+          <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-5 sm:p-8 mb-8">
             <h3 className="font-display text-2xl font-bold uppercase text-slate-900 mb-4">
               Compatibilité Véhicules
             </h3>
@@ -346,11 +410,15 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
 
         {/* Related Products */}
         {related.length > 0 && (
-          <div>
+          <div className="border-t border-slate-200 pt-8">
             <h3 className="font-display text-2xl font-bold uppercase text-slate-900 mb-6">
               Produits Similaires
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div
+              ref={relatedRailRef}
+              aria-label="Produits similaires"
+              className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-1 px-1 scrollbar-hide"
+            >
               {related.map(r => {
                 const rImg = resolveMediaUrl(r.imageUrl, PLACEHOLDER);
                 
@@ -358,9 +426,9 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                   <button
                     key={r._id}
                     onClick={() => onProductSelect(r._id)}
-                    className="bg-white rounded-xl shadow border border-slate-200 p-4 text-left hover:shadow-lg transition-all"
+                    className="flex-[0_0_calc(100%-1rem)] sm:flex-[0_0_calc(50%-0.75rem)] lg:flex-[0_0_calc(33.333%-1rem)] snap-start bg-white rounded-xl shadow border border-slate-200 p-4 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all"
                   >
-                    <div className="h-32 bg-slate-100 rounded mb-3 overflow-hidden">
+                    <div className="aspect-[16/9] bg-slate-100 rounded-lg mb-3 overflow-hidden">
                       <img src={rImg} alt={r.name} onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER; }} className="w-full h-full object-cover" />
                     </div>
                     <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{getCategoryLabel(r.category)}</div>

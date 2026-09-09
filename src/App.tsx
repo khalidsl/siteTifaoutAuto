@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useEffect } from 'react';
+import { Suspense, lazy, useState, useEffect, useRef } from 'react';
 import type { Page, CartItem, QuoteRequest as QuoteRequestType } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -15,12 +15,43 @@ const QuoteRequest = lazy(() => import('./pages/QuoteRequest'));
 const ClientPortal = lazy(() => import('./pages/ClientPortal'));
 const AdminBackoffice = lazy(() => import('./pages/AdminBackoffice'));
 
+interface NavigationState {
+  tifaout?: boolean;
+  page?: Page;
+  selectedProductId?: string | null;
+  catalogCategory?: string;
+  scrollY?: number;
+}
+
+const NAVIGATION_STORAGE_KEY = 'tifaout_navigation';
+
+const readNavigationState = (): NavigationState => {
+  const historyState = window.history.state as NavigationState | null;
+  if (historyState?.tifaout) return historyState;
+
+  try {
+    return JSON.parse(sessionStorage.getItem(NAVIGATION_STORAGE_KEY) || '{}') as NavigationState;
+  } catch {
+    return {};
+  }
+};
+
+const saveNavigationState = (state: NavigationState) => {
+  try {
+    sessionStorage.setItem(NAVIGATION_STORAGE_KEY, JSON.stringify({ ...state, tifaout: true }));
+  } catch {
+    // Ignore storage restrictions.
+  }
+};
+
 export default function App() {
   const { user } = useAuth();
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [catalogCategory, setCatalogCategory] = useState<string>('all');
+  const initialNavigation = readNavigationState();
+  const [currentPage, setCurrentPage] = useState<Page>(initialNavigation.page || 'home');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(initialNavigation.selectedProductId || null);
+  const [catalogCategory, setCatalogCategory] = useState<string>(initialNavigation.catalogCategory || 'all');
   const [_quotes, setQuotes] = useState<QuoteRequestType[]>([]);
+  const pendingScrollY = useRef<number | null>(initialNavigation.tifaout ? initialNavigation.scrollY ?? 0 : null);
 
 
   // Cart with localStorage persistence
@@ -41,32 +72,110 @@ export default function App() {
     }
   }, [cart]);
 
-  // Scroll to top on page change
+  // Keep browser back/forward navigation inside the SPA and restore the saved position.
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.history.scrollRestoration = 'manual';
+    const currentState = (window.history.state || {}) as NavigationState;
+    if (!currentState.tifaout) {
+      const initialState = {
+        tifaout: true,
+        page: currentPage,
+        selectedProductId,
+        catalogCategory,
+        scrollY: 0,
+      } satisfies NavigationState;
+      window.history.replaceState(initialState, '');
+      saveNavigationState(initialState);
+    }
+
+    const handlePopState = () => {
+      const nextState = (window.history.state || {}) as NavigationState;
+      pendingScrollY.current = nextState.scrollY ?? 0;
+      setCurrentPage(nextState.page || 'home');
+      setSelectedProductId(nextState.selectedProductId || null);
+      setCatalogCategory(nextState.catalogCategory || 'all');
+      saveNavigationState(nextState);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.history.scrollRestoration = 'auto';
+    };
+  }, []);
+
+  useEffect(() => {
+    const saveCurrentScroll = () => {
+      const state = (window.history.state || {}) as NavigationState;
+      saveNavigationState({
+        ...state,
+        tifaout: true,
+        page: currentPage,
+        selectedProductId,
+        catalogCategory,
+        scrollY: window.scrollY,
+      });
+    };
+
+    window.addEventListener('beforeunload', saveCurrentScroll);
+    return () => window.removeEventListener('beforeunload', saveCurrentScroll);
+  }, [currentPage, selectedProductId, catalogCategory]);
+
+  useEffect(() => {
+    const savedScrollY = pendingScrollY.current;
+    pendingScrollY.current = null;
+    const restoreScroll = () => {
+      window.scrollTo({ top: savedScrollY ?? 0, behavior: savedScrollY === null ? 'smooth' : 'auto' });
+    };
+    const frame = window.requestAnimationFrame(() => {
+      restoreScroll();
+      if (savedScrollY !== null) window.requestAnimationFrame(restoreScroll);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [currentPage, selectedProductId]);
+
+  const pushNavigation = (page: Page, nextState: Partial<NavigationState> = {}) => {
+    const currentState = {
+      ...(window.history.state || {}),
+      tifaout: true,
+      scrollY: window.scrollY,
+    } satisfies NavigationState;
+    window.history.replaceState(currentState, '');
+    saveNavigationState(currentState);
+
+    const nextNavigation = {
+      tifaout: true,
+      page,
+      selectedProductId: nextState.selectedProductId || null,
+      catalogCategory: nextState.catalogCategory || catalogCategory,
+      scrollY: 0,
+    } satisfies NavigationState;
+    window.history.pushState(nextNavigation, '');
+    saveNavigationState(nextNavigation);
+    setCurrentPage(page);
+    setSelectedProductId(nextState.selectedProductId || null);
+    if (nextState.catalogCategory) setCatalogCategory(nextState.catalogCategory);
+  };
 
   const navigate = (page: Page) => {
     const activeUser = user || getSession();
     if (page === 'admin' && (!activeUser || activeUser.role !== 'admin')) {
-      setCurrentPage('auth');
+      pushNavigation('auth');
       return;
     }
     if (page === 'client' && (!activeUser || !activeUser.token)) {
-      setCurrentPage('auth');
+      pushNavigation('auth');
       return;
     }
-    setCurrentPage(page);
+    pushNavigation(page);
   };
 
   const handleProductSelect = (id: string) => {
-    setSelectedProductId(id);
-    setCurrentPage('product');
+    pushNavigation('product', { selectedProductId: id });
   };
 
   const handleCategoryNav = (cat: string) => {
-    setCatalogCategory(cat);
-    setCurrentPage('catalog');
+    pushNavigation('catalog', { catalogCategory: cat });
   };
 
   const handleAddToCart = (item: CartItem) => {

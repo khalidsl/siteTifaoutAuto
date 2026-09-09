@@ -16,6 +16,7 @@ import {
 } from '../services/api';
 import { useAuth, clearSession, getSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { ORDER_STATUSES, type OrderStatus } from '../utils/orderStatus';
 import OrdersTab from './admin/OrdersTab';
 import QuotesTab from './admin/QuotesTab';
 import ProductsTab from './admin/ProductsTab';
@@ -335,24 +336,18 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     });
   };
 
-  const updateOrderStatus = async (id: string, status: string) => {
+  const updateOrderStatus = async (id: string, status: OrderStatus) => {
     if (!user || !user.token) return;
 
-    const nextStatus = typeof status === 'string' ? status.trim() : '';
-    console.log('[AdminBackoffice] updateOrderStatus called', { id, rawStatus: status, nextStatus, tokenAvailable: !!user?.token });
-
-    if (!nextStatus) {
-      console.error('[AdminBackoffice] blocked empty order status update', { id, status });
-      notify('Statut vide, mise à jour annulée.', 'error');
-      return;
-    }
+    const nextStatus = status.trim() as OrderStatus;
+    if (!ORDER_STATUSES.includes(nextStatus)) return;
 
     try {
       await updateOrderStatusApi(id, nextStatus, user.token);
       setOrderList(prev => prev.map(o => o._id === id ? { ...o, status: nextStatus } : o));
       notify('Statut de commande mis à jour.', 'success');
     } catch (error) {
-      console.error('[AdminBackoffice] updateOrderStatus error', error);
+      console.error('Update order status error:', error);
       notify('Erreur lors de la mise à jour du statut.', 'error');
     }
   };

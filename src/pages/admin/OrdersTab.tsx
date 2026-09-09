@@ -1,9 +1,9 @@
-import type { Page } from '../../types';
+import { getOrderStatusClass, ORDER_STATUSES, type OrderStatus } from '../../utils/orderStatus';
 
 interface OrdersTabProps {
   orderList: any[];
   exportOrdersToExcel: () => void;
-  updateOrderStatus: (id: string, status: string) => Promise<void>;
+  updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
 }
 
 export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderStatus }: OrdersTabProps) {
@@ -58,29 +58,17 @@ export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderS
                   {ord.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement'}
                 </td>
                 <td className="p-3">
-                  <span className={`px-2.5 py-1 text-xs font-bold rounded ${
-                    ord.status === 'Livré' ? 'bg-green-100 text-green-800' :
-                    ord.status === 'Payée' ? 'bg-emerald-100 text-emerald-800' :
-                    ord.status === 'Retour' ? 'bg-red-100 text-red-800' :
-                    ord.status === 'Expédié' ? 'bg-blue-100 text-blue-800' :
-                    'bg-amber-100 text-amber-800'
-                  }`}>
+                  <span className={`px-2.5 py-1 text-xs font-bold rounded ${getOrderStatusClass(ord.status)}`}>
                     {ord.status}
                   </span>
                 </td>
                 <td className="p-3 text-right">
                   <select
                     value={ord.status}
-                    onChange={e => updateOrderStatus(ord._id, e.target.value)}
+                    onChange={e => updateOrderStatus(ord._id, e.target.value as OrderStatus)}
                     className="text-xs bg-slate-50 border border-slate-300 rounded px-2 py-1 outline-none cursor-pointer"
                   >
-                    <option value="En attente">En attente</option>
-                    <option value="En préparation">En préparation</option>
-                    <option value="Payée">Payée</option>
-                    <option value="Expédié">Expédié</option>
-                    <option value="Livré">Livré</option>
-                    <option value="Retour">Retour</option>
-                    <option value="Annulé">Annulé</option>
+                    {ORDER_STATUSES.map(status => <option key={status} value={status}>{status}</option>)}
                   </select>
                 </td>
               </tr>
