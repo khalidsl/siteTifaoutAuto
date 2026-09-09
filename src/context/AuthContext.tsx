@@ -95,9 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: Boolean(user && user.role === 'admin'),
     login: (nextUser) => setUser(normalizeSessionUser(nextUser)),
     logout: () => {
-      logoutApi();
-      clearSession();
+      localStorage.removeItem(SESSION_KEY);
       setUser(null);
+      void logoutApi();
     },
   }), [user]);
 
@@ -125,6 +125,5 @@ export const getSession = (): SessionUser | null => readStoredUser();
 
 export const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
-  logoutApi();
 };
 

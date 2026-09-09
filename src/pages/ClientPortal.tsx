@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import type { Page, RepairTicket } from '../types';
 import { MOCK_REPAIR_TICKETS } from '../data/mockData';
 import { getMyOrdersApi, getMyQuotesApi } from '../services/api';
-import { useAuth, clearSession, getSession } from '../context/AuthContext';
+import { useAuth, getSession } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { resolveMediaUrl } from '../utils/media';
 
 interface ClientPortalProps {
@@ -10,13 +11,15 @@ interface ClientPortalProps {
 }
 
 export default function ClientPortal({ navigate }: ClientPortalProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { notify } = useToast();
   const currentUser = user || getSession();
   const [activeTab, setActiveTab] = useState<'orders' | 'quotes' | 'profile'>('orders');
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
   // Redirect to login if no real session
   useEffect(() => {
@@ -142,6 +145,29 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
   return (
     <div className="min-h-screen bg-slate-100 pt-28 pb-16">
+      {showLogoutConfirmation && (
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/60 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">Confirmer la déconnexion</h3>
+            <p className="mt-3 text-sm text-slate-600">Voulez-vous vraiment vous déconnecter ?</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowLogoutConfirmation(false)} className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-200">Non</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirmation(false);
+                  logout();
+                  notify('Déconnexion réussie.', 'success');
+                  navigate('auth');
+                }}
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-red-700"
+              >
+                Oui, déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header Banner */}
       <div className="bg-slate-800 border-b border-slate-700 text-white py-8 px-6 shadow-inner">
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -170,10 +196,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
               <span className="text-xl font-extrabold text-amber-400 font-mono">{currentUser.loyaltyPoints || 0} pts</span>
             </div>
             <button
-              onClick={() => {
-                clearSession();
-                navigate('auth');
-              }}
+              onClick={() => setShowLogoutConfirmation(true)}
               className="px-3 py-2 text-xs font-semibold rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
             >
               Déconnexion

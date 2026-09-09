@@ -14,7 +14,7 @@ import {
   deleteUserApi,
   createProductApi,
 } from '../services/api';
-import { useAuth, clearSession, getSession } from '../context/AuthContext';
+import { useAuth, getSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ORDER_STATUSES, type OrderStatus } from '../utils/orderStatus';
 import OrdersTab from './admin/OrdersTab';
@@ -29,7 +29,7 @@ interface AdminBackofficeProps {
 }
 
 export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const activeUser = user || getSession();
   const { notify } = useToast();
   const [tab, setTab] = useState<'products' | 'orders' | 'quotes' | 'users'>('products');
@@ -45,6 +45,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ id: number; message: string; onConfirm: () => void } | null>(null);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
   // Image previews for add / edit forms
   const [addImagePreviews, setAddImagePreviews] = useState<string[]>([]);
@@ -402,6 +403,30 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
         </div>
       )}
 
+      {showLogoutConfirmation && (
+        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/60 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">Confirmer la déconnexion</h3>
+            <p className="mt-3 text-sm text-slate-600">Voulez-vous vraiment vous déconnecter ?</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowLogoutConfirmation(false)} className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-200">Non</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirmation(false);
+                  logout();
+                  notify('Déconnexion réussie.', 'success');
+                  navigate('auth');
+                }}
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-red-700"
+              >
+                Oui, déconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Admin Top Header */}
       <div className="bg-slate-900 border-b border-slate-800 text-white py-6 px-6 shadow-md">
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -429,10 +454,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
             </button>
             {activeUser ? (
               <button
-                onClick={() => {
-                  clearSession();
-                  navigate('auth');
-                }}
+                onClick={() => setShowLogoutConfirmation(true)}
                 className="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold uppercase rounded shadow transition-colors"
               >
                 Déconnexion
