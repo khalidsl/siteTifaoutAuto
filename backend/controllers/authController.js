@@ -11,11 +11,11 @@ const getRefreshTokenSecret = () => {
 };
 
 const generateAccessToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
 const generateRefreshToken = (id) => {
-  return jwt.sign({ id }, getRefreshTokenSecret(), { expiresIn: '7d' });
+  return jwt.sign({ id }, getRefreshTokenSecret(), { expiresIn: '2d' });
 };
 
 const setRefreshTokenCookie = (res, token) => {
@@ -23,7 +23,7 @@ const setRefreshTokenCookie = (res, token) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+    maxAge: 2 * 24 * 60 * 60 * 1000, // 2 jours
   });
 };
 
