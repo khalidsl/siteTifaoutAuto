@@ -228,10 +228,6 @@ export default function Auth({ navigate }: AuthProps) {
             </div>
           )}
 
-          {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
-            <div className="mb-5 flex justify-center" ref={googleButtonRef} />
-          )}
-
           {/* ── LOGIN FORM ── */}
           {tab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
@@ -357,6 +353,18 @@ export default function Auth({ navigate }: AuthProps) {
                 {isLoading ? <><FaSpinner className="animate-spin" /> Inscription...</> : 'Créer mon Compte & Bénéficier de -5% →'}
               </button>
             </form>
+          )}
+
+          {/* ── Séparateur + Connexion Google (déplacé sous les formulaires) ── */}
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+            <>
+              <div className="flex items-center gap-3 my-6">
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-[10px] font-bold uppercase text-slate-400">Ou</span>
+                <div className="flex-1 h-px bg-slate-200" />
+              </div>
+              <div className="flex justify-center" ref={googleButtonRef} />
+            </>
           )}
         </div>
 
