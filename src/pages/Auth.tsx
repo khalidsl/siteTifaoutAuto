@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Page } from '../types';
-import { loginApi, registerApi } from '../services/api';
+import { googleLoginApi, loginApi, registerApi } from '../services/api';
 import { useAuth, saveSession } from '../context/AuthContext';
 import {
   FaUserCheck,
@@ -16,6 +16,20 @@ import {
 
 interface AuthProps {
   navigate: (page: Page) => void;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (options: { client_id: string; callback: (response: { credential: string }) => void }) => void;
+          renderButton: (element: HTMLElement, options: Record<string, string>) => void;
+          cancel: () => void;
+        };
+      };
+    };
+  }
 }
 
 export default function Auth({ navigate }: AuthProps) {
@@ -35,6 +49,53 @@ export default function Auth({ navigate }: AuthProps) {
   });
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegConfirm, setShowRegConfirm] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!clientId || !googleButtonRef.current) return;
+
+    const renderGoogleButton = () => {
+      if (!window.google || !googleButtonRef.current) return;
+      googleButtonRef.current.innerHTML = '';
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async ({ credential }) => {
+          setError('');
+          setIsLoading(true);
+          try {
+            const user = await googleLoginApi(credential);
+            saveSession(user);
+            login(user);
+            navigate(user.role === 'admin' ? 'admin' : 'client');
+          } catch (err: any) {
+            setError(err.message || 'Connexion Google impossible.');
+          } finally {
+            setIsLoading(false);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '360',
+        text: 'continue_with',
+      });
+    };
+
+    if (window.google) {
+      renderGoogleButton();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = renderGoogleButton;
+    document.head.appendChild(script);
+    return () => window.google?.accounts.id.cancel();
+  }, [login, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +228,10 @@ export default function Auth({ navigate }: AuthProps) {
             </div>
           )}
 
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+            <div className="mb-5 flex justify-center" ref={googleButtonRef} />
+          )}
+
           {/* ── LOGIN FORM ── */}
           {tab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
@@ -283,6 +348,7 @@ export default function Auth({ navigate }: AuthProps) {
                   </div>
                 </div>
               </div>
+              
               <button
                 type="submit"
                 disabled={isLoading}

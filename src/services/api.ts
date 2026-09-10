@@ -56,6 +56,13 @@ export const loginApi = async (identifier: string, password: string): Promise<Se
   });
 };
 
+export const googleLoginApi = async (credential: string): Promise<SessionUser> => {
+  return requestJson(`${API_BASE}/auth/google`, {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  });
+};
+
 export const logoutApi = async (): Promise<void> => {
   try {
     await requestJson(`${API_BASE}/auth/logout`, { method: 'POST' });

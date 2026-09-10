@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const logger = require('../utils/logger');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const getRefreshTokenSecret = () => {
   const secret = process.env.REFRESH_TOKEN_SECRET;
@@ -115,6 +118,63 @@ exports.login = async (req, res) => {
   } catch (error) {
     logger.error('LOGIN ERROR:', { error: error.message });
     res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+// @desc   Login or register with Google Identity Services
+// @route  POST /api/auth/google
+// @access Public
+exports.googleLogin = async (req, res) => {
+  try {
+    const credential = typeof req.body?.credential === 'string' ? req.body.credential : '';
+    if (!credential || !process.env.GOOGLE_CLIENT_ID) {
+      return res.status(400).json({ message: 'La connexion Google n’est pas configurée.' });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+      return res.status(401).json({ message: 'Compte Google non vérifié.' });
+    }
+
+    const email = payload.email.toLowerCase().trim();
+    let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] });
+    if (!user) {
+      user = await User.create({
+        firstName: payload.given_name || payload.name?.split(' ')[0] || 'Client',
+        lastName: payload.family_name || payload.name?.split(' ').slice(1).join(' ') || 'Google',
+        email,
+        phone: '',
+        password: crypto.randomBytes(32).toString('hex'),
+        googleId: payload.sub,
+        authProvider: 'google',
+      });
+    } else if (!user.googleId) {
+      user.googleId = payload.sub;
+      user.authProvider = 'google';
+      await user.save();
+    }
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+    setRefreshTokenCookie(res, refreshToken);
+    res.json({
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      discountRate: user.discountRate,
+      loyaltyPoints: user.loyaltyPoints,
+      token: accessToken,
+    });
+  } catch (error) {
+    logger.error('GOOGLE LOGIN ERROR:', { error: error.message });
+    res.status(401).json({ message: 'Connexion Google impossible. Veuillez réessayer.' });
   }
 };
 

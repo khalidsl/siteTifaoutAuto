@@ -5,12 +5,14 @@ const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, maxlength: 60, trim: true },
   lastName: { type: String, required: true, maxlength: 60, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, maxlength: 120, trim: true },
-  phone: { type: String, required: true, maxlength: 30, trim: true },
+  phone: { type: String, default: '', maxlength: 30, trim: true },
   vehicleBrand: { type: String, default: '', maxlength: 100, trim: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['client', 'admin'], default: 'client' },
   loyaltyPoints: { type: Number, default: 0, min: 0 },
   discountRate: { type: Number, default: 5, min: 0, max: 100 },
+  googleId: { type: String, sparse: true, unique: true },
+  authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
 }, { timestamps: true });
 
 userSchema.index({ phone: 1 });
