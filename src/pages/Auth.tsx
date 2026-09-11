@@ -279,16 +279,16 @@ export default function Auth({ navigate }: AuthProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Prénom</label>
-                  <input required type="text" placeholder="" value={regData.firstName} onChange={e => setRegData(p => ({ ...p, firstName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                  <input required type="text" placeholder="Votre prénom" value={regData.firstName} onChange={e => setRegData(p => ({ ...p, firstName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
                 </div>
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Nom</label>
-                  <input required type="text" placeholder="" value={regData.lastName} onChange={e => setRegData(p => ({ ...p, lastName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                  <input required type="text" placeholder="Votre nom" value={regData.lastName} onChange={e => setRegData(p => ({ ...p, lastName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Email professionnel</label>
-                <input required type="email" placeholder="vous@garage.ma" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                <input required type="email" placeholder="vous@gmail.com" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -383,14 +383,14 @@ export default function Auth({ navigate }: AuthProps) {
                 },
                 {
                   icon: <FaPercent className="text-amber-500" />,
-                  title: 'Remise Garagiste Pro (-5%)',
+                  title: 'Remise Garagiste  (%)',
                   desc: 'Tarifs préférentiels automatiques sur l\'ensemble du catalogue pièces.',
                 },
-                {
-                  icon: <FaStar className="text-amber-500" />,
-                  title: 'Points de Fidélité',
-                  desc: 'Cumulez des points à chaque commande et bénéficiez de remises supplémentaires.',
-                },
+                // {
+                //   icon: <FaStar className="text-amber-500" />,
+                //   title: 'Points de Fidélité',
+                //   desc: 'Cumulez des points à chaque commande et bénéficiez de remises supplémentaires.',
+                // },
                 {
                   icon: <FaCircleCheck className="text-green-500" />,
                   title: 'Historique & Factures',
@@ -408,11 +408,11 @@ export default function Auth({ navigate }: AuthProps) {
             </div>
           </div>
 
-          {/* Admin info hint */}
+          {/* Admin info hint
           <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 text-white text-xs">
             <p className="font-mono text-slate-400 mb-1">Accès administrateur</p>
             <p className="font-semibold text-slate-200">Connectez-vous avec le compte admin pour accéder au Back-Office de gestion des produits et commandes.</p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
