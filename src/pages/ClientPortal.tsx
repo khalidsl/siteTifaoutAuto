@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Page, RepairTicket } from '../types';
+import type { Page, RepairTicket, Order, QuoteRequest, ApiOrderItem } from '../types';
 import { MOCK_REPAIR_TICKETS } from '../data/mockData';
 import { getMyOrdersApi, getMyQuotesApi } from '../services/api';
 import { useAuth, getSession } from '../context/AuthContext';
@@ -16,8 +16,8 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
   const currentUser = user || getSession();
   const [activeTab, setActiveTab] = useState<'orders' | 'quotes' | 'profile'>('orders');
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [quotes, setQuotes] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
@@ -32,12 +32,12 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
     const token = currentUser?.token;
     if (token) {
       getMyOrdersApi(token)
-        .then(data => setOrders((Array.isArray(data) ? data : []) as any[]))
+        .then(data => setOrders(Array.isArray(data) ? data as unknown as Order[] : []))
         .catch(err => console.error("Error loading orders:", err))
         .finally(() => setIsLoadingOrders(false));
 
       getMyQuotesApi(token)
-        .then(data => setQuotes((Array.isArray(data) ? data : []) as any[]))
+        .then(data => setQuotes(Array.isArray(data) ? data as unknown as QuoteRequest[] : []))
         .catch(err => console.error("Error loading quotes:", err));
     } else {
       setIsLoadingOrders(false);
@@ -51,7 +51,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
   const companyInfo = currentUser.vehicleBrand || currentUser.companyName || 'Particulier';
   const discountRate = currentUser.discountRate ?? 0;
 
-  const printInvoice = (order: any) => {
+  const printInvoice = (order: Order) => {
     if (order.status !== 'Payée') return;
     const invoiceWindow = window.open('', '_blank', 'width=900,height=700');
     if (!invoiceWindow) {
@@ -62,7 +62,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
     const logoUrl = 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802840/tifaout-auto-assets/ka53ii0be3nvezt8ntca.png';
 
     const escapeHtml = (value: unknown) => String(value ?? '')
-      .replace(/&/g, '&amp;') 
+      .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
@@ -71,14 +71,13 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
     const totalHt = Number(order.total || 0);
     const vat = totalHt * 0.2;
     const totalTtc = totalHt + vat;
-    const rows = (order.items || []).map((item: any) => `
+    const rows = ((order.items as ApiOrderItem[]) || []).map((item) => `
       <tr>
         <td>${escapeHtml(item.productName)}</td>
         <td>${escapeHtml(item.productRef || '-')}</td>
         <td class="number">${item.qty}</td>
         <td class="number">${Number(item.price || 0).toLocaleString('fr-MA')} MAD</td>
         <td class="number">${(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td>
-      </tr>
     `).join('');
 
     invoiceWindow.document.write(`<!doctype html>
@@ -97,7 +96,9 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
         @media print{body{padding:16mm 18mm 30mm}}
       </style></head><body>
         <div class="header"><div class="brand"><img src="${logoUrl}" alt="TIFAOUT AUTO"><div class="brand-copy"><h1>TIFAOUT AUTO</h1><div class="muted">Injection Diesel · Agadir</div></div></div>
-          <div><div class="invoice-title">Facture d’achat</div><div class="meta"><strong>N° :</strong><span>${escapeHtml(invoiceNumber)}</span><strong>Date :</strong><span>${new Date(order.createdAt).toLocaleDateString('fr-FR')}</span><strong>Statut :</strong><span>${escapeHtml(order.status)}</span></div></div></div>
+          <div><div class="invoice-title">Facture d’achat</div><div class="meta"><strong>N° :</strong><span>${escapeHtml(invoiceNumber)}</span><strong>Date :</strong><span>${order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString('fr-FR')
+        : (order.date || '—')}</span><strong>Statut :</strong><span>${escapeHtml(order.status)}</span></div></div></div>
         <div class="box"><strong>FACTURÉ À</strong><br>${escapeHtml(order.guestInfo?.firstName)} ${escapeHtml(order.guestInfo?.lastName)}<br>${escapeHtml(order.guestInfo?.email)} · ${escapeHtml(order.guestInfo?.phone)}<br>${escapeHtml(order.guestInfo?.address)}, ${escapeHtml(order.guestInfo?.city)}</div>
         <h2>Détail de la commande</h2><table><thead><tr><th>Produit</th><th>Référence</th><th class="number">Qté</th><th class="number">Prix unitaire HT</th><th class="number">Total HT</th></tr></thead><tbody>${rows}</tbody></table>
         <div class="totals"><div><span>Total HT</span><strong>${totalHt.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vat.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${totalTtc.toLocaleString('fr-MA')} MAD</strong></div></div>
@@ -123,13 +124,13 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
     const escapeHtml = (value: unknown) => String(value ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-    const sections = paidOrders.map((order: any) => {
+    const sections = paidOrders.map((order: Order) => {
       const invoiceNumber = order.orderNumber || `CMD-${String(order._id).slice(-6).toUpperCase()}`;
       const totalHt = Number(order.total || 0);
       const vat = totalHt * 0.2;
       const totalTtc = totalHt + vat;
-      const rows = (order.items || []).map((item: any) => `<tr><td>${escapeHtml(item.productName)}</td><td>${escapeHtml(item.productRef || '-')}</td><td class="number">${item.qty}</td><td class="number">${Number(item.price || 0).toLocaleString('fr-MA')} MAD</td><td class="number">${(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td></tr>`).join('');
-      return `<section class="invoice"><div class="header"><div class="brand"><img src="${logoUrl}" alt="TIFAOUT AUTO"><div><h1>TIFAOUT AUTO</h1><div class="muted">Injection Diesel · Agadir</div></div></div><div><div class="invoice-title">Facture d’achat</div><span class="muted">N° ${escapeHtml(invoiceNumber)}</span><br><span class="muted">${new Date(order.createdAt).toLocaleDateString('fr-FR')}</span></div></div><div class="box"><strong>FACTURÉ À</strong><br>${escapeHtml(order.guestInfo?.firstName)} ${escapeHtml(order.guestInfo?.lastName)}<br>${escapeHtml(order.guestInfo?.email)} · ${escapeHtml(order.guestInfo?.phone)}<br>${escapeHtml(order.guestInfo?.address)}, ${escapeHtml(order.guestInfo?.city)}</div><table><thead><tr><th>Produit</th><th>Référence</th><th>Qté</th><th>Prix unitaire HT</th><th>Total HT</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>Total HT</span><strong>${totalHt.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vat.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${totalTtc.toLocaleString('fr-MA')} MAD</strong></div></div><div class="footer">Paiement : ${escapeHtml(order.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement')} · Facture acquittée<br>TIFAOUT AUTO · Réparation & Pièces Injection Diesel · Agadir, Maroc · 70 Bd Abdelkrim EL Khattabi · 05 25 20 06 65</div></section>`;
+      const rows = ((order.items as ApiOrderItem[]) || []).map((item) => `<tr><td>${escapeHtml(item.productName)}</td><td>${escapeHtml(item.productRef || '-')}</td><td class="number">${item.qty}</td><td class="number">${Number(item.price || 0).toLocaleString('fr-MA')} MAD</td><td class="number">${(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td></tr>`).join('');
+      return `<section class="invoice"><div class="header"><div class="brand"><img src="${logoUrl}" alt="TIFAOUT AUTO"><div><h1>TIFAOUT AUTO</h1><div class="muted">Injection Diesel · Agadir</div></div></div><div><div class="invoice-title">Facture d’achat</div><span class="muted">N° ${escapeHtml(invoiceNumber)}</span><br><span class="muted">${new Date(order.createdAt || order.date || Date.now()).toLocaleDateString('fr-FR')}</span></div></div><div class="box"><strong>FACTURÉ À</strong><br>${escapeHtml(order.guestInfo?.firstName)} ${escapeHtml(order.guestInfo?.lastName)}<br>${escapeHtml(order.guestInfo?.email)} · ${escapeHtml(order.guestInfo?.phone)}<br>${escapeHtml(order.guestInfo?.address)}, ${escapeHtml(order.guestInfo?.city)}</div><table><thead><tr><th>Produit</th><th>Référence</th><th>Qté</th><th>Prix unitaire HT</th><th>Total HT</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>Total HT</span><strong>${totalHt.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vat.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${totalTtc.toLocaleString('fr-MA')} MAD</strong></div></div><div class="footer">Paiement : ${escapeHtml(order.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement')} · Facture acquittée<br>TIFAOUT AUTO · Réparation & Pièces Injection Diesel · Agadir, Maroc · 70 Bd Abdelkrim EL Khattabi · 05 25 20 06 65</div></section>`;
     }).join('');
     invoiceWindow.document.write(`<!doctype html><html lang="fr"><head><meta charset="UTF-8"><title>Factures TIFAOUT AUTO</title><style>@page{size:A4;margin:0}body{font-family:Arial,sans-serif;color:#172033;margin:0;padding:16mm 18mm 12mm;font-size:11px;position:relative}body:before{content:"";position:fixed;z-index:-1;left:12%;top:28%;width:600px;height:600px;background:url('${logoUrl}') center/contain no-repeat;opacity:.045;filter:grayscale(1)}body:after{content:"TIFAOUT AUTO";position:fixed;z-index:-1;left:50%;top:52%;transform:translate(-50%,-50%) rotate(-28deg);font-size:74px;font-weight:900;letter-spacing:8px;color:#1684c7;opacity:.055;white-space:nowrap}.invoice{height:252mm;box-sizing:border-box;display:flex;flex-direction:column;position:relative;page-break-after:always;overflow:hidden}.invoice:last-child{page-break-after:auto}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #1684c7;padding-bottom:12px}.brand{display:flex;align-items:center;gap:12px}.brand img{width:155px;height:62px;object-fit:contain;object-position:left center}h1{margin:0 0 5px;font-size:22px}.invoice-title{color:#0b4f82;font-size:15px;font-weight:bold;text-transform:uppercase}.muted{color:#64748b}.box{background:#fff;border:1px solid #6aa8ff;border-radius:9px;padding:11px;margin:16px 0}table{width:100%;border-collapse:collapse;margin-top:15px;border:1px solid #334155}th,td{padding:6px 7px;border:1px solid #94a3b8;text-align:left}th{background:#dbeafe;color:#172033;font-size:9px;text-transform:uppercase;text-align:center}.number{text-align:right}.totals{margin:16px 0 0 auto;width:280px;border-top:1px solid #64748b}.totals div{display:flex;justify-content:space-between;padding:5px 0}.totals .grand-total{border-top:2px solid #172033;font-size:15px;font-weight:bold;padding-top:7px}.footer{margin-top:auto;padding:10px 0 12px;border-top:1px solid #94a3b8;color:#475569;font-size:9px;text-align:center}.footer-bar{position:absolute;left:0;right:0;bottom:0;margin:0;padding:8px;background:#1684c7;color:#fff;text-align:center;font-size:10px}@media print{body{padding:16mm 18mm 12mm}}</style></head><body>${sections}</body></html>`);
     invoiceWindow.document.close();
@@ -215,18 +216,16 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-4 px-6 font-semibold text-sm transition-all border-b-2 flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
+              onClick={() => setActiveTab(tab.id as 'orders' | 'quotes' | 'profile')}
+              className={`py-4 px-6 font-semibold text-sm transition-all border-b-2 flex items-center gap-2 ${activeTab === tab.id
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
             >
               <span>{tab.label}</span>
               {tab.count !== undefined && (
-                <span className={`px-2 py-0.5 text-xs font-mono rounded-full ${
-                  activeTab === tab.id ? 'bg-blue-100 text-blue-800 font-bold' : 'bg-slate-100 text-slate-600'
-                }`}>
+                <span className={`px-2 py-0.5 text-xs font-mono rounded-full ${activeTab === tab.id ? 'bg-blue-100 text-blue-800 font-bold' : 'bg-slate-100 text-slate-600'
+                  }`}>
                   {tab.count}
                 </span>
               )}
@@ -259,7 +258,13 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
                       <div>
                         <span className="font-mono text-sm font-bold text-blue-600 mr-3">{order.orderNumber}</span>
-                        <span className="text-xs text-slate-500">Passée le {new Date(order.createdAt).toLocaleDateString('fr-FR')}</span>
+                        <span className="text-xs text-slate-500">
+                          Passée le {
+                            order.createdAt
+                              ? new Date(order.createdAt).toLocaleDateString('fr-FR')
+                              : (order.date || '—')
+                          }
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 flex-wrap justify-end">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded ${order.status === 'Livré' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
@@ -281,10 +286,13 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                     </div>
 
                     <div className="mt-3 space-y-2">
-                      {order.items.map((item: any, idx: number) => (
-                        <div key={idx} className="flex justify-between items-center text-sm text-slate-700">
-                          <span className="font-medium">{item.productName} (Réf. {item.productRef}) × {item.qty}</span>
-                          <span className="font-mono text-xs font-semibold">{(item.price * item.qty).toLocaleString('fr-MA')} MAD</span>
+                      {((order.items as ApiOrderItem[]) || []).map((item: ApiOrderItem, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                          <div>
+                            <p className="font-medium text-gray-800">{item.productName}</p>
+                            <p className="text-sm text-gray-500">Réf: {item.productRef || '-'} · Qté: {item.qty}</p>
+                          </div>
+                          <span className="font-bold whitespace-nowrap">{(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</span>
                         </div>
                       ))}
                     </div>
@@ -341,12 +349,11 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                             </span>
                             <span className="text-xs text-slate-400">{dateStr}</span>
                           </div>
-                          <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
-                            q.status === 'Accepté' ? 'bg-green-100 text-green-800' :
+                          <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${q.status === 'Accepté' ? 'bg-green-100 text-green-800' :
                             q.status === 'Devis envoyé' ? 'bg-blue-100 text-blue-800' :
-                            q.status === 'Refusé' ? 'bg-red-100 text-red-800' :
-                            'bg-amber-100 text-amber-800'
-                          }`}>
+                              q.status === 'Refusé' ? 'bg-red-100 text-red-800' :
+                                'bg-amber-100 text-amber-800'
+                            }`}>
                             {q.status}
                           </span>
                         </div>

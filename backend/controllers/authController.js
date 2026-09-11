@@ -2,8 +2,12 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
 const logger = require('../utils/logger');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// TTL du refresh token en millisecondes (doit correspondre a l option expiresIn)
+const REFRESH_TOKEN_TTL_MS = 2 * 24 * 60 * 60 * 1000; // 2 jours
 
 const getRefreshTokenSecret = () => {
   const secret = process.env.REFRESH_TOKEN_SECRET;
@@ -58,6 +62,7 @@ exports.register = async (req, res) => {
     const accessToken = generateAccessToken(user._id, user.role);
     const refreshToken = generateRefreshToken(user._id);
     setRefreshTokenCookie(res, refreshToken);
+    await RefreshToken.createSession(user._id, refreshToken, REFRESH_TOKEN_TTL_MS);
 
     logger.info(`Nouvel utilisateur inscrit: ${user.email} (${user.role})`);
     res.status(201).json({
@@ -101,6 +106,7 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user._id, user.role);
     const refreshToken = generateRefreshToken(user._id);
     setRefreshTokenCookie(res, refreshToken);
+    await RefreshToken.createSession(user._id, refreshToken, REFRESH_TOKEN_TTL_MS);
 
     logger.info(`Connexion réussie: ${user.email} (${user.role})`);
     res.json({
@@ -161,6 +167,7 @@ exports.googleLogin = async (req, res) => {
     const accessToken = generateAccessToken(user._id, user.role);
     const refreshToken = generateRefreshToken(user._id);
     setRefreshTokenCookie(res, refreshToken);
+    await RefreshToken.createSession(user._id, refreshToken, REFRESH_TOKEN_TTL_MS);
     res.json({
       _id: user._id,
       firstName: user.firstName,
@@ -191,9 +198,20 @@ exports.refreshToken = async (req, res) => {
     const user = await User.findById(decoded.id).select('-password');
     if (!user) return res.status(401).json({ message: 'Compte introuvable ou désactivé.' });
 
+    // Vérification en base : le token doit être une session active non révoquée
+    const sessionValid = await RefreshToken.isValid(token);
+    if (!sessionValid) {
+      // Token inconnu ou révoqué : forcer la déconnexion (possible vol de session)
+      logger.warn(`Tentative de refresh avec un token révoqué ou inconnu pour userId=${decoded.id}`);
+      return res.status(401).json({ message: 'Session invalide. Veuillez vous reconnecter.' });
+    }
+
+    // Rotation : révoquer l ancien token, émettre un nouveau
+    await RefreshToken.revokeSession(token);
     const newAccessToken = generateAccessToken(user._id, user.role);
     const newRefreshToken = generateRefreshToken(user._id);
     setRefreshTokenCookie(res, newRefreshToken);
+    await RefreshToken.createSession(user._id, newRefreshToken, REFRESH_TOKEN_TTL_MS);
 
     res.json({
       token: newAccessToken,
@@ -241,7 +259,16 @@ exports.getMe = async (req, res) => {
 // @desc   Logout user & clear refresh token cookie
 // @route  POST /api/auth/logout
 // @access Public
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
+  const token = req.cookies?.refreshToken;
+  if (token) {
+    // Révoquer la session en base pour bloquer toute réutilisation du token
+    try {
+      await RefreshToken.revokeSession(token);
+    } catch (err) {
+      logger.warn('Logout: impossible de révoquer la session en base.', { error: err.message });
+    }
+  }
   res.clearCookie('refreshToken', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

@@ -2,11 +2,15 @@ export type Category = 'injecteur' | 'pompe' | 'joint' | 'capteur' | 'regulateur
 export type Brand = 'Bosch' | 'Delphi' | 'Denso' | 'Zexel' | 'Siemens' | 'VAG' | 'ROLLANT' | 'Multimarque';
 
 export interface Product {
-  // Identifiants — supporte les deux formats (statique & MongoDB)
+  // ── Identifiants ─────────────────────────────────────────────────
   id: string;
   _id?: string;
-  ref: string;
+  /** Référence technique du produit (champ MongoDB). */
   reference?: string;
+  /** @deprecated Alias de `reference` — présent dans les données statiques. Préférer `reference`. */
+  ref?: string;
+
+  // ── Informations produit ──────────────────────────────────────────
   name: string;
   category: Category;
   brand: Brand | string;
@@ -14,10 +18,16 @@ export interface Product {
   oldPrice?: number;
   imageUrl?: string;
   images?: string[];
-  compatible: string[];
-  compatibleVehicles?: string[];
   description: string;
   features?: string[];
+
+  // ── Compatibilité ─────────────────────────────────────────────────
+  /** Véhicules compatibles (champ MongoDB). */
+  compatibleVehicles?: string[];
+  /** @deprecated Alias de `compatibleVehicles` — présent dans les données statiques. Préférer `compatibleVehicles`. */
+  compatible?: string[];
+
+  // ── Stock & État ─────────────────────────────────────────────────
   inStock?: boolean;
   stock?: number;
   isReconditioned: boolean;
@@ -44,18 +54,30 @@ export interface GuestInfo {
   deliveryMethod?: 'agence' | 'express' | 'magasin';
 }
 
+/** Item d un order tel que retourné par l API (format plat, sans objet Product imbriqué). */
+export interface ApiOrderItem {
+  productId?: string;
+  productName: string;
+  productRef?: string;
+  qty: number;
+  price: number;
+}
+
 export interface Order {
   id: string;
   _id?: string;
   orderNumber: string;
-  date: string;
-  items: CartItem[];
+  /** Format ISO 8601 ou champ createdAt selon la source (API vs local). */
+  date?: string;
+  createdAt?: string;
+  items: CartItem[] | ApiOrderItem[];
   subtotal: number;
   shipping: number;
   total: number;
   guestInfo: GuestInfo;
   status: 'En attente' | 'En préparation' | 'Payée' | 'Expédié' | 'Livré' | 'Retour' | 'Annulé';
   isGuest: boolean;
+  user?: string;
 }
 
 export interface RepairTicket {
@@ -95,6 +117,7 @@ export interface QuoteRequest {
   photoUrl?: string;
   status: 'En attente' | 'En cours de chiffrage' | 'Devis envoyé' | 'Accepté' | 'Refusé';
   estimatedPrice?: number;
+  createdAt?: string;
 }
 
 export interface UserAccount {
@@ -109,4 +132,16 @@ export interface UserAccount {
   loyaltyPoints: number;
 }
 
-
+/** Utilisateur tel que retourné par l API /api/admin/users. */
+export interface ApiUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  role: 'client' | 'admin';
+  discountRate?: number;
+  loyaltyPoints?: number;
+  vehicleBrand?: string;
+  createdAt?: string;
+}

@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import Pagination from '../../components/admin/Pagination';
+
 interface UsersTabProps {
   usersList: any[];
   handleUpdateUserRole: (userId: string, newRole: string) => Promise<void>;
@@ -5,6 +8,8 @@ interface UsersTabProps {
 }
 
 export default function UsersTab({ usersList, handleUpdateUserRole, handleDeleteUser }: UsersTabProps) {
+  const [page, setPage] = useState(1);
+  const visibleUsers = usersList.slice((page - 1) * 10, page * 10);
   return (
     <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -33,7 +38,7 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleDelete
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {usersList.map((u: any) => (
+              {visibleUsers.map((u: any) => (
                 <tr key={u._id} className="hover:bg-slate-50">
                   <td className="p-3">
                     <div className="font-bold text-slate-900">{u.firstName} {u.lastName}</div>
@@ -65,6 +70,7 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleDelete
               ))}
             </tbody>
           </table>
+          <Pagination page={page} totalItems={usersList.length} onPageChange={setPage} />
         </div>
       )}
     </div>

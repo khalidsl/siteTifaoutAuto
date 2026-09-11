@@ -248,7 +248,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
           {/* Main Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-md border border-slate-200 p-8 space-y-8">
-              
+
               {/* ── STEP 1: Vos Informations Personnelles ── */}
               <div>
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-5">
@@ -272,11 +272,10 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                         key={type}
                         type="button"
                         onClick={() => setForm(p => ({ ...p, customerType: type }))}
-                        className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${
-                          form.customerType === type
+                        className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${form.customerType === type
                             ? 'bg-blue-800 text-white border-blue-800 shadow-md scale-[1.02]'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-400'
-                        }`}
+                          }`}
                       >
                         {type}
                       </button>

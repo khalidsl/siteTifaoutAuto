@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Page, RepairTicket } from '../types';
+import type { Page, RepairTicket, Product, Order, QuoteRequest, ApiUser, ApiOrderItem } from '../types';
 import { MOCK_REPAIR_TICKETS } from '../data/mockData';
 import {
   getProductsApi,
@@ -33,14 +33,14 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const activeUser = user || getSession();
   const { notify } = useToast();
   const [tab, setTab] = useState<'products' | 'orders' | 'quotes' | 'users'>('products');
-  const [productList, setProductList] = useState<any[]>([]);
-  const [orderList, setOrderList] = useState<any[]>([]);
-  const [quoteList, setQuoteList] = useState<any[]>([]);
-  const [usersList, setUsersList] = useState<any[]>([]);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const [orderList, setOrderList] = useState<Order[]>([]);
+  const [quoteList, setQuoteList] = useState<QuoteRequest[]>([]);
+  const [usersList, setUsersList] = useState<ApiUser[]>([]);
   const [repairList, setRepairList] = useState<RepairTicket[]>(MOCK_REPAIR_TICKETS);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   // Product filters
   const [prodSearch, setProdSearch] = useState('');
   const [prodCategory, setProdCategory] = useState('all');
-  
+
   const loadAllData = async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -73,12 +73,12 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     if (activeUser && activeUser.token) {
       try {
         const [ordersData, quotesData, usersData] = await Promise.all([
-          getAllOrdersApi<{ orders?: any[] }>(activeUser.token).catch((err) => { console.error(err); hadError = true; return { orders: [] }; }),
-          getAllQuotesApi<{ quotes?: any[] }>(activeUser.token).catch((err) => { console.error(err); hadError = true; return { quotes: [] }; }),
+          getAllOrdersApi<{ orders?: Order[] }>(activeUser.token).catch((err) => { console.error(err); hadError = true; return { orders: [] }; }),
+          getAllQuotesApi<{ quotes?: QuoteRequest[] }>(activeUser.token).catch((err) => { console.error(err); hadError = true; return { quotes: [] }; }),
           getAllUsersApi(activeUser.token).catch((err) => { console.error(err); hadError = true; return []; })
         ]);
-        setOrderList(Array.isArray(ordersData) ? ordersData : ((ordersData as any)?.orders || []));
-        setQuoteList(Array.isArray(quotesData) ? quotesData : ((quotesData as any)?.quotes || []));
+        setOrderList(Array.isArray(ordersData) ? ordersData as unknown as Order[] : (ordersData.orders || []));
+        setQuoteList(Array.isArray(quotesData) ? quotesData as unknown as QuoteRequest[] : (quotesData.quotes || []));
         setUsersList(Array.isArray(usersData) ? usersData : []);
       } catch (e) {
         console.error("Error loading admin data:", e);
@@ -108,13 +108,13 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     }
     const dataToExport = orderList.map(ord => ({
       "N° Commande": ord.orderNumber,
-      "Date": new Date(ord.createdAt).toLocaleDateString('fr-FR'),
+      "Date": new Date(ord.createdAt || ord.date || Date.now()).toLocaleDateString('fr-FR'),
       "Client": `${ord.guestInfo?.firstName} ${ord.guestInfo?.lastName}`,
       "Téléphone": ord.guestInfo?.phone,
       "Ville": ord.guestInfo?.city,
       "Adresse": ord.guestInfo?.address,
-      "Articles Commandés": ord.items.map((i: any) => `${i.productName} (x${i.qty})`).join('\n'),
-      "Nombre d'Articles": ord.items.reduce((acc: number, i: any) => acc + i.qty, 0),
+      "Articles Commandés": (ord.items as ApiOrderItem[]).map((i) => `${i.productName} (x${i.qty})`).join('\n'),
+      "Nombre d'Articles": (ord.items as ApiOrderItem[]).reduce((acc: number, i) => acc + i.qty, 0),
       "Total (MAD)": ord.total,
       "Mode de Règlement": ord.guestInfo?.paymentMethod === 'especes' ? 'Espèces' : 'Virement',
       "Statut": ord.status,
@@ -132,7 +132,9 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     }
     const dataToExport = quoteList.map(q => ({
       "N° Devis": q.quoteNumber,
-      "Date": new Date(q.createdAt).toLocaleDateString('fr-FR'),
+      "Date": q.createdAt
+        ? new Date(q.createdAt).toLocaleDateString('fr-FR')
+        : '—',
       "Client": q.name,
       "Téléphone": q.phone,
       "Ville": q.city || '',
@@ -184,7 +186,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       const rows = parseCsv(await file.text()) as Record<string, unknown>[];
       const categories = new Set(['injecteur', 'pompe', 'capteur', 'joint', 'regulateur', 'valve', 'durite', 'autre']);
       const existingReferences = new Set(productList.map(product => String(product.reference || product.ref || '').trim().toLowerCase()));
-      const importedProducts: any[] = [];
+      const importedProducts: Product[] = [];
       const errors: string[] = [];
 
       for (const [index, row] of rows.entries()) {
@@ -262,16 +264,29 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
 
   const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!editingProduct || !user?.token) return;
+
+    if (!editingProduct || !editingProduct._id || !user?.token) return;
+
     setIsEditSubmitting(true);
+
     const form = e.currentTarget;
     const formData = new FormData(form);
 
     formData.append('retainedImages', JSON.stringify(retainedImages));
 
     try {
-      const updated = await updateProductApi(editingProduct._id, formData, user.token);
-      setProductList(prev => prev.map(p => p._id === editingProduct._id ? updated : p));
+      const updated = await updateProductApi(
+        editingProduct._id,
+        formData,
+        user.token
+      );
+
+      setProductList(prev =>
+        prev.map(p =>
+          p._id === editingProduct._id ? updated : p
+        )
+      );
+
       setEditingProduct(null);
       setEditImagePreviews([]);
       notify('Produit mis à jour avec succès !', 'success');
@@ -353,14 +368,45 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     }
   };
 
-  const updateQuoteStatus = async (id: string, status?: string, estimatedPrice?: number) => {
+  type QuoteStatus =
+    | 'En attente'
+    | 'En cours de chiffrage'
+    | 'Devis envoyé'
+    | 'Accepté'
+    | 'Refusé';
+
+  const updateQuoteStatus = async (
+    id: string,
+    status?: QuoteStatus,
+    estimatedPrice?: number
+  ) => {
     if (!user || !user.token) return;
+
     try {
-      const payload: any = {};
-      if (status) payload.status = status;
-      if (estimatedPrice !== undefined) payload.estimatedPrice = estimatedPrice;
-      const updated = await updateQuoteStatusApi(id, payload, user.token);
-      setQuoteList(prev => prev.map(q => q._id === id ? { ...q, ...(updated as Record<string, any>) } : q));
+      const payload: Partial<QuoteRequest> = {};
+
+      if (status) {
+        payload.status = status;
+      }
+
+      if (estimatedPrice !== undefined) {
+        payload.estimatedPrice = estimatedPrice;
+      }
+
+      const updated = await updateQuoteStatusApi(
+        id,
+        payload,
+        user.token
+      );
+
+      setQuoteList(prev =>
+        prev.map(q =>
+          q._id === id
+            ? { ...q, ...(updated as Record<string, any>) }
+            : q
+        )
+      );
+
       notify('Devis mis à jour.', 'success');
     } catch (error) {
       console.error('Update quote status error:', error);
@@ -495,17 +541,15 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
           ].map(t => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id as any)}
-              className={`py-4 px-5 font-semibold text-sm transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${
-                tab === t.id
-                  ? 'border-blue-600 text-blue-600 font-bold'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
+              onClick={() => setTab(t.id as 'products' | 'orders' | 'quotes' | 'users')}
+              className={`py-4 px-5 font-semibold text-sm transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${tab === t.id
+                ? 'border-blue-600 text-blue-600 font-bold'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
             >
               <span>{t.label}</span>
-              <span className={`px-2 py-0.5 text-xs font-mono rounded-full ${
-                tab === t.id ? 'bg-blue-100 text-blue-800 font-bold' : 'bg-slate-100 text-slate-600'
-              }`}>
+              <span className={`px-2 py-0.5 text-xs font-mono rounded-full ${tab === t.id ? 'bg-blue-100 text-blue-800 font-bold' : 'bg-slate-100 text-slate-600'
+                }`}>
                 {t.count}
               </span>
             </button>

@@ -19,7 +19,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
   const [related, setRelated] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -34,7 +34,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
         const data = await getProductByIdApi(productId);
         if (!cancelled) {
           setProduct(data);
-          
+
           // Fetch related products (same category)
           try {
             const relatedData = await getProductsApi({ category: data.category, limit: 20 });
@@ -54,11 +54,11 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
         if (!cancelled) setLoading(false);
       }
     };
-    
+
     loadProduct();
     setQty(1); // reset qty on product change
     setActiveImg(0); // reset image index
-    
+
     return () => { cancelled = true; };
   }, [productId]);
 
@@ -217,7 +217,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                 className="w-full h-full object-contain p-3 sm:p-6 transition-transform duration-300 group-hover:scale-[1.03]"
                 onError={e => { (e.target as HTMLImageElement).src = defaultImg; }}
               />
-              
+
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                 {product.brand && (
@@ -277,17 +277,16 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                     key={i}
                     onClick={() => setActiveImg(i)}
                     aria-label={`Afficher l'image ${i + 1}`}
-                    className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 overflow-hidden bg-slate-50 transition-all flex-shrink-0 ${
-                      activeImg === i 
-                        ? 'border-blue-600 ring-2 ring-blue-600/30 scale-105 shadow-md' 
+                    className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 overflow-hidden bg-slate-50 transition-all flex-shrink-0 ${activeImg === i
+                        ? 'border-blue-600 ring-2 ring-blue-600/30 scale-105 shadow-md'
                         : 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-400'
-                    }`}
+                      }`}
                   >
-                    <img 
-                      src={img} 
-                      alt={`Miniature ${i + 1}`} 
+                    <img
+                      src={img}
+                      alt={`Miniature ${i + 1}`}
                       className="w-full h-full object-contain p-1"
-                      onError={e => { (e.target as HTMLImageElement).src = defaultImg; }} 
+                      onError={e => { (e.target as HTMLImageElement).src = defaultImg; }}
                     />
                     <div className="absolute bottom-1 right-1 bg-slate-900/60 text-white text-[9px] font-bold px-1 rounded">
                       #{i + 1}
@@ -332,18 +331,18 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
 
               {savings > 0 && (
                 <p className="text-xs font-bold text-amber-700 bg-amber-50 p-2.5 rounded border border-amber-200 mb-6">
-                   Économie : {savings.toLocaleString('fr-MA')} MAD par rapport au prix neuf constructeur
+                  Économie : {savings.toLocaleString('fr-MA')} MAD par rapport au prix neuf constructeur
                 </p>
               )}
 
               <p className="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap">
                 {product.description || 'Aucune description disponible pour ce produit.'}
               </p>
-              
+
               {product.remarque && !inStock && (
-                 <p className="text-xs font-bold text-slate-700 bg-slate-100 p-3 rounded mb-6">
-                    Remarque : {product.remarque}
-                 </p>
+                <p className="text-xs font-bold text-slate-700 bg-slate-100 p-3 rounded mb-6">
+                  Remarque : {product.remarque}
+                </p>
               )}
             </div>
 
@@ -421,7 +420,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
             >
               {related.map(r => {
                 const rImg = resolveMediaUrl(r.imageUrl, PLACEHOLDER);
-                
+
                 return (
                   <button
                     key={r._id}

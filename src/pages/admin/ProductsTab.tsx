@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
 import { resolveMediaUrl } from '../../utils/media';
+import Pagination from '../../components/admin/Pagination';
 
 interface ProductsTabProps {
   productList: any[];
@@ -53,6 +55,7 @@ export default function ProductsTab({
   onRemoveRetainedImage,
   onSetRetainedImages,
 }: ProductsTabProps) {
+  const [page, setPage] = useState(1);
   const CATEGORY_PLACEHOLDERS: Record<string, string> = {
     injecteur: 'https://placehold.co/150x150/dbeafe/1d4ed8?text=Injecteur',
     pompe: 'https://placehold.co/150x150/fef9c3/854d0e?text=Pompe+HP',
@@ -63,6 +66,16 @@ export default function ProductsTab({
     durite: 'https://placehold.co/150x150/f0fdf4/166534?text=Durite',
     autre: 'https://placehold.co/150x150/f1f5f9/475569?text=Pièce',
   };
+
+  const filteredProducts = useMemo(() => productList.filter((p: any) => {
+    const matchCat = prodCategory === 'all' || p.category === prodCategory;
+    const search = prodSearch.toLowerCase();
+    const matchSearch = !search || (p.name || '').toLowerCase().includes(search) || (p.reference || p.ref || '').toLowerCase().includes(search) || (p.brand || '').toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  }), [productList, prodCategory, prodSearch]);
+
+  useEffect(() => setPage(1), [prodCategory, prodSearch]);
+  const visibleProducts = filteredProducts.slice((page - 1) * 10, page * 10);
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
@@ -322,79 +335,72 @@ export default function ProductsTab({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {productList
-            .filter((p: any) => {
-              const matchCat = prodCategory === 'all' || p.category === prodCategory;
-              const s = prodSearch.toLowerCase();
-              const matchSearch = !s || (p.name || '').toLowerCase().includes(s) || (p.reference || p.ref || '').toLowerCase().includes(s) || (p.brand || '').toLowerCase().includes(s);
-              return matchCat && matchSearch;
-            })
-            .map((p: any) => {
-              const inStock = Number(p.stock ?? 0) > 0;
-              const rawImg = p.images?.length ? p.images[0] : p.imageUrl;
-              const imgSrc = rawImg ? resolveMediaUrl(rawImg, CATEGORY_PLACEHOLDERS[p.category] || 'https://placehold.co/150x150/e2e8f0/64748b?text=Produit') : (CATEGORY_PLACEHOLDERS[p.category] || 'https://placehold.co/150x150/e2e8f0/64748b?text=Produit');
-              const imgCount = p.images?.length ? p.images.length : (p.imageUrl ? 1 : 0);
+          {visibleProducts.map((p: any) => {
+            const inStock = Number(p.stock ?? 0) > 0;
+            const rawImg = p.images?.length ? p.images[0] : p.imageUrl;
+            const imgSrc = rawImg ? resolveMediaUrl(rawImg, CATEGORY_PLACEHOLDERS[p.category] || 'https://placehold.co/150x150/e2e8f0/64748b?text=Produit') : (CATEGORY_PLACEHOLDERS[p.category] || 'https://placehold.co/150x150/e2e8f0/64748b?text=Produit');
+            const imgCount = p.images?.length ? p.images.length : (p.imageUrl ? 1 : 0);
 
-              return (
-                <div key={p._id} className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
-                        {p.brand || 'Multimarque'}
-                      </span>
-                      <button
-                        onClick={() => onToggleStock(p._id, p.stock)}
-                        className={`text-xs font-bold px-2 py-0.5 rounded transition-colors ${
-                          inStock ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'
+            return (
+              <div key={p._id} className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                      {p.brand || 'Multimarque'}
+                    </span>
+                    <button
+                      onClick={() => onToggleStock(p._id, p.stock)}
+                      className={`text-xs font-bold px-2 py-0.5 rounded transition-colors ${inStock ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'
                         }`}
-                      >
-                        {inStock ? `● En Stock (${p.stock})` : '○ Rupture'}
-                      </button>
-                    </div>
-
-                    <div className="flex mt-3">
-                      <div className="relative shrink-0 mr-3">
-                        <img src={imgSrc} alt={p.name} className="w-16 h-16 object-cover rounded border border-slate-200" />
-                        {imgCount > 1 && (
-                          <span className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[9px] font-bold px-1 rounded-full border border-white shadow-sm">
-                            📷 {imgCount}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900 leading-tight line-clamp-2">{p.name}</h4>
-                        <p className="text-[10px] font-mono text-slate-500 mt-1">RÉF: {p.reference || p.ref || 'N/A'}</p>
-                        <div className="mt-1 space-x-1">
-                          {p.isReconditioned && <span className="inline-block text-[9px] px-1 bg-amber-100 text-amber-800 rounded font-semibold">OEM</span>}
-                          {p.isNewPart && <span className="inline-block text-[9px] px-1 bg-blue-100 text-blue-800 rounded font-semibold">NEUF</span>}
-                        </div>
-                      </div>
-                    </div>
+                    >
+                      {inStock ? `● En Stock (${p.stock})` : '○ Rupture'}
+                    </button>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
-                    <span className="font-display font-extrabold text-lg text-slate-900">{(p.price ?? 0).toLocaleString('fr-MA')} MAD</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onStartEdit(p)}
-                        className="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded transition-colors"
-                      >
-                        ✏ Modifier
-                      </button>
-                      <button
-                        onClick={() => onDeleteProduct(p._id, p.name)}
-                        className="px-2 py-1 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded transition-colors"
-                        title="Supprimer le produit"
-                      >
-                        🗑
-                      </button>
+                  <div className="flex mt-3">
+                    <div className="relative shrink-0 mr-3">
+                      <img src={imgSrc} alt={p.name} className="w-16 h-16 object-cover rounded border border-slate-200" />
+                      {imgCount > 1 && (
+                        <span className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[9px] font-bold px-1 rounded-full border border-white shadow-sm">
+                          📷 {imgCount}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 leading-tight line-clamp-2">{p.name}</h4>
+                      <p className="text-[10px] font-mono text-slate-500 mt-1">RÉF: {p.reference || p.ref || 'N/A'}</p>
+                      <div className="mt-1 space-x-1">
+                        {p.isReconditioned && <span className="inline-block text-[9px] px-1 bg-amber-100 text-amber-800 rounded font-semibold">OEM</span>}
+                        {p.isNewPart && <span className="inline-block text-[9px] px-1 bg-blue-100 text-blue-800 rounded font-semibold">NEUF</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center">
+                  <span className="font-display font-extrabold text-lg text-slate-900">{(p.price ?? 0).toLocaleString('fr-MA')} MAD</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onStartEdit(p)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded transition-colors"
+                    >
+                      ✏ Modifier
+                    </button>
+                    <button
+                      onClick={() => onDeleteProduct(p._id, p.name)}
+                      className="px-2 py-1 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded transition-colors"
+                      title="Supprimer le produit"
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
+      <Pagination page={page} totalItems={filteredProducts.length} onPageChange={setPage} />
     </div>
   );
 }

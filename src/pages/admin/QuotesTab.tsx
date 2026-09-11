@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { resolveMediaUrl } from '../../utils/media';
+import Pagination from '../../components/admin/Pagination';
 
 interface QuotesTabProps {
   quoteList: any[];
@@ -7,6 +9,8 @@ interface QuotesTabProps {
 }
 
 export default function QuotesTab({ quoteList, exportQuotesToExcel, updateQuoteStatus }: QuotesTabProps) {
+  const [page, setPage] = useState(1);
+  const visibleQuotes = quoteList.slice((page - 1) * 10, page * 10);
   return (
     <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
       <div className="flex justify-between items-center mb-6">
@@ -25,7 +29,7 @@ export default function QuotesTab({ quoteList, exportQuotesToExcel, updateQuoteS
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
-          {quoteList.map((q: any) => {
+          {visibleQuotes.map((q: any) => {
             const photoSrc = q.photoUrl ? resolveMediaUrl(q.photoUrl) : null;
             const dateStr = q.createdAt ? new Date(q.createdAt).toLocaleDateString('fr-FR') : (q.date || 'Récent');
 
@@ -99,6 +103,7 @@ export default function QuotesTab({ quoteList, exportQuotesToExcel, updateQuoteS
           })}
         </div>
       )}
+      <Pagination page={page} totalItems={quoteList.length} onPageChange={setPage} />
     </div>
   );
 }

@@ -63,19 +63,20 @@ exports.getProducts = async (req, res) => {
     }
 
     if (search) {
-      const escapedSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escapedSearch, 'i');
-      query.$or = [
-        { name: regex },
-        { reference: regex },
-        { brand: regex },
-        { description: regex },
-      ];
+      // Utilise l index de texte MongoDB pour la recherche (plus performant que les RegExp)
+      // Champs indexés : name, reference, brand, description (voir Product.js)
+      query.$text = { $search: String(search) };
     }
 
     const skip = (safePage - 1) * safeLimit;
+    // Tri par pertinence si recherche texte active, sinon par date de création
+    const sortOption = search
+      ? { score: { $meta: 'textScore' }, createdAt: -1 }
+      : { createdAt: -1 };
+    const projection = search ? { score: { $meta: 'textScore' } } : {};
+
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit),
+      Product.find(query, projection).sort(sortOption).skip(skip).limit(safeLimit),
       Product.countDocuments(query),
     ]);
 

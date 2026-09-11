@@ -121,16 +121,14 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
           {HERO_IMAGES.map((src, i) => (
             <div
               key={i}
-              className={`absolute inset-0 transition-opacity duration-[1600ms] ease-in-out ${
-                i === heroSlide ? 'opacity-100' : 'opacity-0'
-              }`}
+              className={`absolute inset-0 transition-opacity duration-[1600ms] ease-in-out ${i === heroSlide ? 'opacity-100' : 'opacity-0'
+                }`}
             >
               <img
                 src={src}
                 alt={`Atelier TIFAOUT AUTO garage ${i + 1}`}
-                className={`w-full h-full object-cover transition-transform duration-[7000ms] ease-linear ${
-                  i === heroSlide ? 'scale-110' : 'scale-100'
-                }`}
+                className={`w-full h-full object-cover transition-transform duration-[7000ms] ease-linear ${i === heroSlide ? 'scale-110' : 'scale-100'
+                  }`}
               />
             </div>
           ))}
@@ -144,9 +142,8 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               <button
                 key={idx}
                 onClick={() => setHeroSlide(idx)}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  idx === heroSlide ? 'w-8 bg-blue-500' : 'w-3 bg-white/40 hover:bg-white/70'
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${idx === heroSlide ? 'w-8 bg-blue-500' : 'w-3 bg-white/40 hover:bg-white/70'
+                  }`}
                 aria-label={`Image garage ${idx + 1}`}
               />
             ))}
@@ -370,7 +367,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
             <p className="text-slate-600 text-sm leading-relaxed mb-8">
               Équipé du banc d'essai certifié <strong>Bosch DCI 200</strong>, notre atelier garantit la mesure et le réglage exacts des débits selon les normes constructeur.
             </p>
-            
+
             <div className="grid grid-cols-2 gap-4">
               {[
                 { val: 'Bosch DCI 200', label: 'Banc d\'essai certifié' },

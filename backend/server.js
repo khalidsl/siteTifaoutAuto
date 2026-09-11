@@ -69,25 +69,8 @@ app.get('/', (req, res) => res.json({ status: 'OK', message: 'TIFAOUT AUTO API r
 app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'TIFAOUT AUTO API running' }));
 
 // ─── Middleware global de gestion des erreurs Express ──────────────
-app.use((err, req, res, next) => {
-  logger.error('Erreur interceptée par le middleware global:', {
-    message: err.message,
-    stack: err.stack,
-    method: req.method,
-    url: req.originalUrl,
-    ip: req.ip,
-  });
-
-  const statusCode = err.status || err.statusCode || (err.message?.includes('CORS') ? 403 : 500);
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  res.status(statusCode).json({
-    message: isProduction
-      ? 'Une erreur interne est survenue sur le serveur.'
-      : (err.message || 'Erreur interne du serveur.'),
-    ...(isProduction ? {} : { stack: err.stack }),
-  });
-});
+// Doit être enregistré EN DERNIER, après toutes les routes.
+app.use(require('./middleware/errorHandler'));
 
 // ─── Démarrage immédiat du serveur HTTP (compatible Railway / Cloud) 
 const PORT = process.env.PORT || 5000;
