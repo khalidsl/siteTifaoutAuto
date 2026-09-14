@@ -26,6 +26,9 @@ export interface Product {
   compatibleVehicles?: string[];
   /** @deprecated Alias de `compatibleVehicles` — présent dans les données statiques. Préférer `compatibleVehicles`. */
   compatible?: string[];
+  
+  /** Références compatibles ou croisées. */
+  compatibleReferences?: string[];
 
   // ── Stock & État ─────────────────────────────────────────────────
   inStock?: boolean;

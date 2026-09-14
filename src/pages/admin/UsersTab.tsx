@@ -32,8 +32,8 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleDelete
                 <th className="p-3">Contact</th>
                 <th className="p-3">Véhicule / Garage</th>
                 <th className="p-3">Rôle</th>
-                <th className="p-3">Remise Pro</th>
-                <th className="p-3">Points</th>
+                {/* <th className="p-3">Remise Pro</th> */}
+                {/* <th className="p-3">Points</th> */}
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -61,8 +61,8 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleDelete
                       <option value="admin">Administrateur</option>
                     </select>
                   </td>
-                  <td className="p-3 font-mono font-bold text-amber-700 text-xs">-{u.discountRate || 5}%</td>
-                  <td className="p-3 font-mono font-bold text-slate-800 text-xs">{u.loyaltyPoints || 0} pts</td>
+                  {/* <td className="p-3 font-mono font-bold text-amber-700 text-xs">-{u.discountRate || 5}%</td> */}
+                  {/* <td className="p-3 font-mono font-bold text-slate-800 text-xs">{u.loyaltyPoints || 0} pts</td> */}
                   <td className="p-3 text-right">
                     <button onClick={() => handleDeleteUser(u._id, u.email)} className="px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded border border-red-200 transition-colors">Supprimer</button>
                   </td>

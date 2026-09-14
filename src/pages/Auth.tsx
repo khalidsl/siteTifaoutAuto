@@ -350,7 +350,7 @@ export default function Auth({ navigate }: AuthProps) {
                 disabled={isLoading}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow transition-all flex items-center justify-center gap-2"
               >
-                {isLoading ? <><FaSpinner className="animate-spin" /> Inscription...</> : 'Créer mon Compte & Bénéficier de -5% →'}
+                {isLoading ? <><FaSpinner className="animate-spin" /> Inscription...</> : 'Créer mon Compte '}
               </button>
             </form>
           )}

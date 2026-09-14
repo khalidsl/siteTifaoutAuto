@@ -23,6 +23,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
+  const [activeTab, setActiveTab] = useState<'desc' | 'vehicules' | 'refs'>('desc');
   const relatedRailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -335,7 +336,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                 </p>
               )}
 
-              <p className="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap">
+              <p className="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap line-clamp-3">
                 {product.description || 'Aucune description disponible pour ce produit.'}
               </p>
 
@@ -390,22 +391,99 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
           </div>
         </div>
 
-        {/* Compatibility Section */}
-        {(product.compatibleVehicles || []).length > 0 && (
-          <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-5 sm:p-8 mb-8">
-            <h3 className="font-display text-2xl font-bold uppercase text-slate-900 mb-4">
-              Compatibilité Véhicules
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(product.compatibleVehicles || []).map((v: string, i: number) => (
-                <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded font-semibold text-xs text-slate-800 flex items-center gap-2">
-                  <span className="text-blue-600 font-bold">🚘</span>
-                  <span>{v}</span>
-                </div>
-              ))}
-            </div>
+        {/* Informations Détaillées (Tabs) */}
+        <div className="bg-white rounded-2xl shadow-md border border-slate-200 mb-8 overflow-hidden">
+          {/* Tab Headers */}
+          <div className="flex border-b border-slate-200 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => setActiveTab('desc')}
+              className={`flex-1 min-w-[150px] py-4 px-6 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${
+                activeTab === 'desc'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                  : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              Description Complète
+            </button>
+            <button
+              onClick={() => setActiveTab('vehicules')}
+              className={`flex-1 min-w-[150px] py-4 px-6 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${
+                activeTab === 'vehicules'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                  : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              Véhicules Compatibles
+              {(product.compatibleVehicles || []).length > 0 && (
+                <span className="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">
+                  {(product.compatibleVehicles || []).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('refs')}
+              className={`flex-1 min-w-[150px] py-4 px-6 text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${
+                activeTab === 'refs'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                  : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              Références Compatibles
+              {(product.compatibleReferences || []).length > 0 && (
+                <span className="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">
+                  {(product.compatibleReferences || []).length}
+                </span>
+              )}
+            </button>
           </div>
-        )}
+
+          {/* Tab Content */}
+          <div className="p-5 sm:p-8">
+            {activeTab === 'desc' && (
+              <div className="prose max-w-none text-slate-600">
+                {product.description ? (
+                  <p className="whitespace-pre-wrap leading-relaxed">{product.description}</p>
+                ) : (
+                  <p className="italic text-slate-400">Aucune description détaillée disponible pour ce produit.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'vehicules' && (
+              <>
+                {(product.compatibleVehicles || []).length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {(product.compatibleVehicles || []).map((v: string, i: number) => (
+                      <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded font-semibold text-xs text-slate-800 flex items-center gap-2">
+                        <span className="text-blue-600 font-bold">🚘</span>
+                        <span>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-400">Aucune information de compatibilité véhicule disponible.</p>
+                )}
+              </>
+            )}
+
+            {activeTab === 'refs' && (
+              <>
+                {(product.compatibleReferences || []).length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {(product.compatibleReferences || []).map((ref: string, i: number) => (
+                      <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded font-semibold text-xs text-slate-800 flex items-center gap-2">
+                        <span className="text-blue-600 font-bold">🏷️</span>
+                        <span className="font-mono">{ref}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-400">Aucune référence croisée disponible pour ce produit.</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
         {/* Related Products */}
         {related.length > 0 && (

@@ -51,6 +51,13 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
   const companyInfo = currentUser.vehicleBrand || currentUser.companyName || 'Particulier';
   const discountRate = currentUser.discountRate ?? 0;
 
+  const initials = fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('') || 'C';
+
   const printInvoice = (order: Order) => {
     if (order.status !== 'Payée') return;
     const invoiceWindow = window.open('', '_blank', 'width=900,height=700');
@@ -393,38 +400,91 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
         {/* Tab 3: Profil Pro */}
         {activeTab === 'profile' && (
-          <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6 max-w-2xl">
-            <h2 className="font-display text-2xl font-bold uppercase text-slate-900 mb-6">
-              Informations Compte Garagiste
-            </h2>
+          <div className="grid gap-6 lg:grid-cols-[300px_1fr] max-w-4xl">
+            {/* Fiche signalétique */}
+            <div className="relative bg-slate-900 rounded-xl shadow-md p-6 text-white overflow-hidden h-fit">
+              <span className="pointer-events-none absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-blue-500/40" />
+              <span className="pointer-events-none absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-blue-500/40" />
+              <span className="pointer-events-none absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-blue-500/40" />
+              <span className="pointer-events-none absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-blue-500/40" />
 
-            <div className="space-y-4 text-sm">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 flex justify-between items-center">
-                <div>
-                  <h4 className="font-bold">Remise Pro Appliquée Auto</h4>
-                  <p className="text-xs mt-0.5">Toutes vos commandes en ligne bénéficient de -5% sur les tarifs affichés.</p>
-                </div>
-                <span className="font-mono text-2xl font-extrabold text-amber-700">-5%</span>
+              <div className="flex items-center justify-between mb-6">
+                {/* <span className="font-mono text-[10px] tracking-widest text-blue-400">
+                  FICHE N° {String(currentUser._id || '').slice(-6).toUpperCase() || '——————'}
+                </span> */}
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-mono text-[10px] text-emerald-400">ACTIF</span>
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-500">Nom / Raison Sociale</label>
-                  <p className="font-semibold text-slate-900 mt-1">{companyInfo}</p>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold font-display mb-3">
+                  {initials}
                 </div>
-                <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-500">Contact Principal</label>
-                  <p className="font-semibold text-slate-900 mt-1">{fullName}</p>
-                </div>
-                <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-500">Téléphone</label>
-                  <p className="font-semibold text-slate-900 mt-1 font-mono">{currentUser.phone}</p>
-                </div>
-                <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-500">Email</label>
-                  <p className="font-semibold text-slate-900 mt-1">{currentUser.email}</p>
-                </div>
+                <h3 className="font-display text-lg font-bold">{fullName}</h3>
+                <p className="text-slate-400 text-xs mt-1 font-mono">{companyInfo}</p>
+                <span className="mt-3 inline-block px-3 py-1 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                  {currentUser.role === 'admin' ? 'ADMINISTRATEUR' : discountRate > 0 ? 'GARAGISTE PRO' : 'CLIENT PARTICULIER'}
+                </span>
               </div>
+
+              {/* <div className="mt-6 pt-5 border-t border-dashed border-slate-700 grid grid-cols-2 gap-3 text-center">
+                <div>
+                  <p className="font-mono text-[9px] uppercase text-slate-500">Fidélité</p>
+                  <p className="font-display text-2xl font-extrabold text-amber-400 font-mono">
+                    {currentUser.loyaltyPoints || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono text-[9px] uppercase text-slate-500">Remise</p>
+                  <p className="font-display text-2xl font-extrabold text-blue-400 font-mono">
+                    {discountRate > 0 ? `-${discountRate}%` : '0%'}
+                  </p>
+                </div>
+              </div> */}
+            </div>
+
+            {/* Fiche technique du compte */}
+            <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+              <div className="flex items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-slate-900">Informations du compte</h2>
+                  <p className="text-xs text-slate-500 mt-1">Coordonnées utilisées pour vos commandes et devis.</p>
+                </div>
+                <span className="font-mono text-[10px] text-slate-400 border border-slate-200 rounded px-2 py-1 shrink-0">
+                  {currentUser.role === 'admin' ? 'ADMIN' : discountRate > 0 ? 'PRO' : 'STD'}
+                </span>
+              </div>
+
+              <dl className="space-y-4">
+                {[
+                  ['Nom / Raison sociale', companyInfo],
+                  ['Contact principal', fullName],
+                  ['Téléphone', currentUser.phone],
+                  ['Email', currentUser.email],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-baseline gap-3">
+                    <dt className="text-xs font-semibold text-slate-500 whitespace-nowrap">{label}</dt>
+                    <span className="flex-1 border-b border-dotted border-slate-300 translate-y-[-3px]" />
+                    <dd className="text-sm font-semibold text-slate-900 font-mono text-right">{value || '—'}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              {discountRate > 0 && (
+                <div className="mt-6 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">Remise Pro appliquée automatiquement</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Toutes vos commandes en ligne bénéficient de cette remise sur les tarifs affichés.
+                    </p>
+                  </div>
+                  <span className="font-display text-2xl font-extrabold text-amber-700 font-mono shrink-0">
+                    -{discountRate}%
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
