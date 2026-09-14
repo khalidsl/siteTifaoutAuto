@@ -474,12 +474,12 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
               {discountRate > 0 && (
                 <div className="mt-6 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  <div>
+                  {/* <div>
                     <p className="text-sm font-bold text-amber-900">Remise Pro appliquée automatiquement</p>
                     <p className="text-xs text-amber-700 mt-0.5">
                       Toutes vos commandes en ligne bénéficient de cette remise sur les tarifs affichés.
                     </p>
-                  </div>
+                  </div> */}
                   <span className="font-display text-2xl font-extrabold text-amber-700 font-mono shrink-0">
                     -{discountRate}%
                   </span>
