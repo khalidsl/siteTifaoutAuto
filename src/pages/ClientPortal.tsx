@@ -199,10 +199,10 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-right">
+            {/* <div className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-right">
               <span className="text-[10px] uppercase text-slate-400 block font-semibold">Points de Fidélité</span>
               <span className="text-xl font-extrabold text-amber-400 font-mono">{currentUser.loyaltyPoints || 0} pts</span>
-            </div>
+            </div> */}
             <button
               onClick={() => setShowLogoutConfirmation(true)}
               className="px-3 py-2 text-xs font-semibold rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
