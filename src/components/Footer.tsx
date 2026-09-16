@@ -99,7 +99,7 @@ export default function Footer({ navigate }: FooterProps) {
           </p>
           <p className="flex items-center gap-2 text-slate-300">
             <FaStar className="text-amber-400 text-xs shrink-0" />
-            <a href="https://maps.google.com/?q=TIFAOUT+AUTO+Agadir" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline font-semibold">
+            <a href="https://maps.app.goo.gl/RrtYxiBw1udYLv9b6" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline font-semibold">
               4.5 / 5★ (18 avis Google)
             </a>
           </p>

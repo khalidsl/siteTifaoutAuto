@@ -67,7 +67,7 @@ export default function Contact({ navigate: _navigate }: ContactProps) {
               </div>
 
               <a
-                href="https://www.google.com/maps/dir/?api=1&destination=70+Boulevard+Abdelkrim+El+Khattabi+Agadir+Morocco"
+                href="https://maps.app.goo.gl/RrtYxiBw1udYLv9b6"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded text-center block shadow transition-colors"
@@ -122,8 +122,8 @@ export default function Contact({ navigate: _navigate }: ContactProps) {
                 style={{ border: 0 }}
                 loading="lazy"
                 allowFullScreen
-                referrerPolicy="no-referrer-when-downgrade"
-                src="https://maps.google.com/maps?q=70+Boulevard+Abdelkrim+El+Khattabi+Agadir+80000+Maroc&output=embed&z=16"
+                referrerPolicy="strict-origin-when-cross-origin"
+                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d13763.616138325804!2d-9.5696551!3d30.4104645!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xdb3b74ac9cdae27%3A0xce43dc4bd8c1d721!2sTIFAOUT%20AUTO!5e0!3m2!1sfr!2sma!4v1789561018839!5m2!1sfr!2sma"
               />
             </div>
 

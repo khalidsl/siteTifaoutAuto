@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Page, Product } from '../types';
 import { products as staticProducts, getCategoryLabel } from '../data/products';
 import { getProductsApi } from '../services/api';
@@ -17,6 +17,8 @@ import {
   FaAward,
   FaArrowRight,
   FaLocationDot,
+  FaChevronLeft,
+  FaChevronRight,
 } from 'react-icons/fa6';
 
 interface HomeProps {
@@ -61,22 +63,76 @@ const SERVICES = [
 
 const REVIEWS = [
   {
-    name: 'Hassan B.',
-    role: 'Garagiste indépendant — Casablanca',
+    name: 'Roy',
+    role: 'Client Google — il y a 6 mois',
     rating: 5,
-    text: "Service impeccable, injecteur livré en 48h, reconditionné parfaitement. Après installation sur un Peugeot 308 HDi client, aucun problème depuis 6 mois. Je recommande sans hésitation.",
+    text: "Jawad speaks great English and did an excellent job identifying and resolving my fuel issues within one day. Highly recommended.",
   },
   {
-    name: 'Karim E.',
-    role: 'Chef d\'atelier — Marrakech',
+    name: 'mehdi Aissaoui',
+    role: 'Client Google — il y a 2 semaines',
     rating: 5,
-    text: "Pompe CP3 reconditionnée nickel. Le banc d'essai est professionnel, ils m'ont fourni le rapport de test. Prix très correct. Je travaille régulièrement avec TIFAOUT AUTO.",
+    text: "Best service specifically Ayoube — top, très professionnel et good service. Highly recommended!",
   },
   {
-    name: 'Youssef A.',
-    role: 'Mécanicien — Agadir',
+    name: 'Hicham',
+    role: 'Client Google — il y a 11 mois',
     rating: 5,
-    text: "Bon accueil, équipe compétente. Injecteurs Denso pour un Land Cruiser reconditionnés en 3 jours. Test sur banc inclus dans le prix. Très satisfait du résultat.",
+    text: "Meilleur spécialiste en injection diesel. Qualité de service et confiance. Merci haj aziz.",
+  },
+  {
+    name: 'mohamed amechghal',
+    role: 'Client Google — il y a 11 mois',
+    rating: 5,
+    text: "Meilleur service et bon traitement professionnel au domaine.",
+  },
+  {
+    name: 'Centre Atlantique Formation',
+    role: 'Client Google — il y a 11 mois',
+    rating: 5,
+    text: "أحسن خدمات ممكن تلقاها فمدينة أكادير و الجنوب عموما. (Le meilleur service que vous puissiez trouver à Agadir et dans le sud en général.)",
+  },
+  {
+    name: 'قناة أرطغل',
+    role: 'Client Google — il y a 11 mois',
+    rating: 5,
+    text: "خدمة جيدة و استقبال متميز برافوو (Bon service et accueil distingué — Bravo !)",
+  },
+  {
+    name: 'Hicham Hicham',
+    role: 'Client Google — il y a 11 mois',
+    rating: 5,
+    text: "Bon service et bonne équipe.",
+  },
+  {
+    name: 'elyazid elfaidi',
+    role: 'Client Google — il y a 11 mois',
+    rating: 5,
+    text: "Bon service, top top !",
+  },
+  {
+    name: 'paradis cars',
+    role: 'Local Guide · 7 avis — il y a 3 ans',
+    rating: 5,
+    text: "Bonne service.",
+  },
+  {
+    name: 'marocain et fier',
+    role: 'Local Guide · 31 avis — il y a 5 ans',
+    rating: 5,
+    text: "Diagnostic auto, réparation des injecteurs de tous types de voitures.",
+  },
+  {
+    name: 'Jamal Barka',
+    role: 'Client Google · 12 avis — il y a 6 ans',
+    rating: 5,
+    text: "Bon service.",
+  },
+  {
+    name: 'Saraisrae Elfaidi',
+    role: 'Client Google — il y a 11 mois',
+    rating: 5,
+    text: "خدمة رائعة (Service excellent !)",
   },
 ];
 
@@ -111,6 +167,39 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
     }, 6000);
     return () => clearInterval(timer);
   }, []);
+
+  // Reviews horizontal auto-scroll
+  const reviewsScrollRef = useRef<HTMLDivElement>(null);
+  const [isReviewsPaused, setIsReviewsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isReviewsPaused) return;
+
+    const interval = setInterval(() => {
+      if (reviewsScrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = reviewsScrollRef.current;
+        if (scrollLeft + clientWidth >= scrollWidth - 20) {
+          reviewsScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          reviewsScrollRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+        }
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isReviewsPaused]);
+
+  const scrollReviewsLeft = () => {
+    if (reviewsScrollRef.current) {
+      reviewsScrollRef.current.scrollBy({ left: -380, behavior: 'smooth' });
+    }
+  };
+
+  const scrollReviewsRight = () => {
+    if (reviewsScrollRef.current) {
+      reviewsScrollRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="bg-slate-50 text-slate-900">
@@ -389,49 +478,117 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
         </div>
       </section>
 
-      {/* ─── REVIEWS / TESTIMONIALS ─── */}
+      {/* ─── REVIEWS / TESTIMONIALS (SCROLL HORIZONTAL) ─── */}
       <section className="py-20 bg-white">
         <div className="max-w-[1440px] mx-auto px-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
             <div>
               <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">Avis & Témoignages Clients</p>
               <h2 className="font-display text-4xl font-extrabold uppercase text-slate-900">
                 La Confiance de nos Clients Garagistes
               </h2>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
-              <div className="font-display text-2xl font-black text-amber-500">4.5 / 5</div>
-              <div className="text-xs text-slate-600">
-                <div className="flex text-amber-400 text-xs">★★★★½</div>
-                <div className="font-semibold text-[11px] text-slate-500">18 avis vérifiés Google</div>
+            
+            <div className="flex items-center gap-4">
+              <a
+                href="https://maps.app.goo.gl/RrtYxiBw1udYLv9b6"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl shadow-sm transition-all"
+              >
+                <div className="font-display text-2xl font-black text-amber-500">4.5 / 5</div>
+                <div className="text-xs text-slate-600">
+                  <div className="flex text-amber-400 text-sm">★★★★½</div>
+                  <div className="font-semibold text-[11px] text-slate-500">18 avis vérifiés Google ↗</div>
+                </div>
+              </a>
+
+              {/* Navigation controls */}
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  onClick={scrollReviewsLeft}
+                  className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 hover:bg-blue-800 hover:text-white hover:border-blue-800 transition-all cursor-pointer"
+                  title="Précédent"
+                  aria-label="Précédent"
+                >
+                  <FaChevronLeft className="text-sm" />
+                </button>
+                <button
+                  onClick={scrollReviewsRight}
+                  className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 hover:bg-blue-800 hover:text-white hover:border-blue-800 transition-all cursor-pointer"
+                  title="Suivant"
+                  aria-label="Suivant"
+                >
+                  <FaChevronRight className="text-sm" />
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          {/* Container Scroll Horizontal Automatique */}
+          <div
+            ref={reviewsScrollRef}
+            onMouseEnter={() => setIsReviewsPaused(true)}
+            onMouseLeave={() => setIsReviewsPaused(false)}
+            onTouchStart={() => setIsReviewsPaused(true)}
+            onTouchEnd={() => setIsReviewsPaused(false)}
+            className="flex gap-6 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scroll-smooth"
+            style={{ scrollbarWidth: 'thin' }}
+          >
             {REVIEWS.map((r, i) => (
-              <div key={i} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+              <div
+                key={i}
+                className="w-[300px] sm:w-[360px] shrink-0 snap-start p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+              >
                 <div className="space-y-3">
                   <div className="flex text-amber-400 text-sm">
                     {Array.from({ length: r.rating }).map((_, idx) => (
                       <FaStar key={idx} />
                     ))}
                   </div>
-                  <p className="text-xs text-slate-700 leading-relaxed italic">
+                  <p className="text-xs text-slate-700 leading-relaxed italic min-h-[60px]">
                     "{r.text}"
                   </p>
                 </div>
                 <div className="pt-3 border-t border-slate-200 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-800 text-white font-bold flex items-center justify-center text-xs">
-                    {r.name.charAt(0)}
+                  <div className="w-9 h-9 rounded-full bg-blue-800 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                    {r.name.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">{r.name}</div>
-                    <div className="text-[10px] text-slate-500">{r.role}</div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate font-semibold">{r.name}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{r.role}</div>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Boutons mobile */}
+          <div className="mt-3 flex sm:hidden justify-center gap-3">
+            <button
+              onClick={scrollReviewsLeft}
+              className="px-4 py-2 rounded-lg bg-slate-100 border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-bold text-slate-700 active:bg-slate-200"
+            >
+              <FaChevronLeft className="text-xs" /> Précédent
+            </button>
+            <button
+              onClick={scrollReviewsRight}
+              className="px-4 py-2 rounded-lg bg-slate-100 border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-bold text-slate-700 active:bg-slate-200"
+            >
+              Suivant <FaChevronRight className="text-xs" />
+            </button>
+          </div>
+
+          <div className="mt-6 text-center">
+            <a
+              href="https://maps.app.goo.gl/RrtYxiBw1udYLv9b6"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700 transition-all shadow-sm"
+            >
+              <FaStar className="text-amber-400" />
+              Voir tous les 18 avis sur Google Maps →
+            </a>
           </div>
         </div>
       </section>

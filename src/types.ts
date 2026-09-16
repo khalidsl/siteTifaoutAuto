@@ -43,7 +43,7 @@ export interface CartItem {
   qty: number;
 }
 
-export type Page = 'home' | 'catalog' | 'product' | 'cart' | 'auth' | 'contact' | 'devis' | 'client' | 'admin';
+export type Page = 'home' | 'catalog' | 'product' | 'cart' | 'auth' | 'contact' | 'services' | 'about' | 'devis' | 'client' | 'admin';
 
 export interface GuestInfo {
   firstName: string;

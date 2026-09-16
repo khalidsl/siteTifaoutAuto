@@ -5,7 +5,7 @@ import Pagination from '../../components/admin/Pagination';
 interface QuotesTabProps {
   quoteList: any[];
   exportQuotesToExcel: () => void;
-  updateQuoteStatus: (id: string, status?: string, estimatedPrice?: number) => Promise<void>;
+  updateQuoteStatus: (id: string, status?: any, estimatedPrice?: number) => Promise<void>;
 }
 
 export default function QuotesTab({ quoteList, exportQuotesToExcel, updateQuoteStatus }: QuotesTabProps) {

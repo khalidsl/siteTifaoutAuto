@@ -79,7 +79,7 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
 
           <div className="flex items-center gap-4">
             <a
-              href="https://maps.google.com/?q=TIFAOUT+AUTO+Agadir"
+              href="https://maps.app.goo.gl/RrtYxiBw1udYLv9b6"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 font-semibold text-amber-400 hover:text-amber-300 transition-colors"
@@ -175,28 +175,24 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
           </div>
 
           <button
-            onClick={() => {
-              navigate('home');
-              setTimeout(() => {
-                const el = document.getElementById('services');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 hover:text-white hover:bg-slate-800 transition-all rounded-md"
+            onClick={() => navigate('services')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-all rounded-md ${
+              currentPage === 'services'
+                ? 'text-white bg-blue-900/60 border border-blue-700/50 shadow-inner'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800'
+            }`}
           >
             <FaWrench className="text-slate-400 text-xs" />
             Nos Services
           </button>
 
           <button
-            onClick={() => {
-              navigate('home');
-              setTimeout(() => {
-                const el = document.getElementById('about');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            className="px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 hover:text-white hover:bg-slate-800 transition-all rounded-md"
+            onClick={() => navigate('about')}
+            className={`px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-all rounded-md ${
+              currentPage === 'about'
+                ? 'text-white bg-blue-900/60 border border-blue-700/50 shadow-inner'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800'
+            }`}
           >
             À propos
           </button>
@@ -291,6 +287,26 @@ export default function Header({ currentPage, navigate, cart, onCategoryNav }: H
                 </button>
               ))}
             </div>
+            
+            <button
+              onClick={() => {
+                navigate('services');
+                setMobileOpen(false);
+              }}
+              className="text-left py-2 text-xs font-bold uppercase tracking-wider text-slate-200 border-b border-slate-800"
+            >
+              Nos Services
+            </button>
+
+            <button
+              onClick={() => {
+                navigate('about');
+                setMobileOpen(false);
+              }}
+              className="text-left py-2 text-xs font-bold uppercase tracking-wider text-slate-200 border-b border-slate-800"
+            >
+              À propos
+            </button>
 
             <button
               onClick={handleAccountClick}

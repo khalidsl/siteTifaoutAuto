@@ -11,6 +11,8 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Auth = lazy(() => import('./pages/Auth'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Services = lazy(() => import('./pages/Services'));
+const About = lazy(() => import('./pages/About'));
 const QuoteRequest = lazy(() => import('./pages/QuoteRequest'));
 const ClientPortal = lazy(() => import('./pages/ClientPortal'));
 const AdminBackoffice = lazy(() => import('./pages/AdminBackoffice'));
@@ -210,7 +212,7 @@ export default function App() {
     setQuotes(prev => [newQuote, ...prev]);
   };
 
-  const knownPages: Page[] = ['home', 'catalog', 'product', 'cart', 'devis', 'client', 'admin', 'auth', 'contact'];
+  const knownPages: Page[] = ['home', 'catalog', 'product', 'cart', 'devis', 'client', 'admin', 'auth', 'contact', 'services', 'about'];
   const shouldShowNotFound = !knownPages.includes(currentPage) || (currentPage === 'product' && !selectedProductId);
 
   return (
@@ -284,6 +286,12 @@ export default function App() {
           )}
           {currentPage === 'contact' && (
             <Contact navigate={navigate} />
+          )}
+          {currentPage === 'about' && (
+            <About navigate={navigate} />
+          )}
+          {currentPage === 'services' && (
+            <Services navigate={navigate} />
           )}
           {shouldShowNotFound && (
             <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
