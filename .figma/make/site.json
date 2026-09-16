@@ -1,7 +1,12 @@
 {
-  "description": "This e-commerce platform specializes in diesel injector repair and sales, offering a user-friendly experience for mechanics and car enthusiasts to easily order parts and services.",
+  "title": "TIFAOUT AUTO — Spécialiste Injection Diesel Agadir",
+  "description": "Atelier agréé Bosch Diesel Service à Agadir : Diagnostic certifié sur banc Bosch DCI 200, réparation, reconditionnement et vente d'injecteurs et pompes haute pression diesel au Maroc.",
+  "language": "fr",
+  "openGraph": {
+    "image": "https://res.cloudinary.com/dgv5kksja/image/upload/v1788802839/tifaout-auto-assets/zapfz3h04w4afiwryakn.png"
+  },
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
