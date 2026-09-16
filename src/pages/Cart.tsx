@@ -29,6 +29,7 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
   const [submitError, setSubmitError] = useState('');
 
   const { user } = useAuth();
+  const discountRate = user?.discountRate ?? 0;
 
   // Auto pre-fill if logged in
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
     }
   }, [user]);
 
-  const { subtotal, shipping, total } = calculateOrderTotals(cart);
+  const { rawSubtotal, discount, subtotal, shipping, total } = calculateOrderTotals(cart, discountRate);
 
   const validate = () => {
     const e: Partial<GuestInfo> = {};
@@ -69,7 +70,7 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
 
     try {
       const created = await createOrderApi(
-        buildOrderPayload(cart, info, !user),
+        buildOrderPayload(cart, info, !user, discountRate),
         user?.token,
       );
 
@@ -337,10 +338,28 @@ export default function Cart({ cart, navigate, onUpdateQty, onRemove, onClearCar
             {/* Right Summary */}
             <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6 h-fit space-y-4">
               <h3 className="font-display text-xl font-bold uppercase text-slate-900 pb-2 border-b">Résumé Panier</h3>
+
+              {discountRate > 0 && (
+                <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                  <span className="text-amber-600 text-base">🏷️</span>
+                  <span className="text-xs font-bold text-amber-800">
+                    Remise : -{discountRate}% appliquée
+                  </span>
+                </div>
+              )}
+
               <div className="flex justify-between text-xs text-slate-600">
                 <span>Sous-total articles :</span>
-                <span className="font-bold text-slate-900">{subtotal.toLocaleString('fr-MA')} MAD</span>
+                <span className="font-bold text-slate-900">{rawSubtotal.toLocaleString('fr-MA')} MAD</span>
               </div>
+
+              {discount > 0 && (
+                <div className="flex justify-between text-xs text-green-700 font-bold">
+                  <span>Remise  -{discountRate}% :</span>
+                  <span>- {discount.toLocaleString('fr-MA')} MAD</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-xs text-slate-600">
                 <span>Frais de livraison :</span>
                 <span className="font-bold text-slate-900">{shipping === 0 ? 'Offerte (Maroc)' : `${shipping} MAD`}</span>

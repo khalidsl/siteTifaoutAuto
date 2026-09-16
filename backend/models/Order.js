@@ -5,6 +5,7 @@ const orderSchema = new mongoose.Schema({
   // Guest or registered user
   isGuest: { type: Boolean, default: true },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  discountRate: { type: Number, default: 0 },
   guestInfo: {
     firstName: { type: String, required: true, maxlength: 60, trim: true },
     lastName: { type: String, required: true, maxlength: 60, trim: true },

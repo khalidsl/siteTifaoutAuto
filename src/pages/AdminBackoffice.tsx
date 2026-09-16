@@ -339,6 +339,17 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     }
   };
 
+  const handleUpdateUserDiscount = async (userId: string, discountRate: number) => {
+    if (!user?.token) return;
+    try {
+      const updated = await updateUserApi(userId, { discountRate }, user.token);
+      setUsersList(prev => prev.map(u => u._id === userId ? { ...u, discountRate: updated.discountRate } : u));
+      notify(`Remise mise à jour: ${discountRate}%`, 'success');
+    } catch (err: any) {
+      notify(err.message || 'Erreur modification remise', 'error');
+    }
+  };
+
   const handleDeleteUser = async (userId: string, email: string) => {
     confirmAction(`Supprimer le compte ${email} ?`, async () => {
       if (!user?.token) return;
@@ -658,6 +669,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
           <UsersTab
             usersList={usersList}
             handleUpdateUserRole={handleUpdateUserRole}
+            handleUpdateUserDiscount={handleUpdateUserDiscount}
             handleDeleteUser={handleDeleteUser}
           />
         )}

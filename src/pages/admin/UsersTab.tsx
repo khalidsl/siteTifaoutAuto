@@ -4,10 +4,11 @@ import Pagination from '../../components/admin/Pagination';
 interface UsersTabProps {
   usersList: any[];
   handleUpdateUserRole: (userId: string, newRole: string) => Promise<void>;
+  handleUpdateUserDiscount?: (userId: string, newDiscount: number) => Promise<void>;
   handleDeleteUser: (userId: string, email: string) => Promise<void>;
 }
 
-export default function UsersTab({ usersList, handleUpdateUserRole, handleDeleteUser }: UsersTabProps) {
+export default function UsersTab({ usersList, handleUpdateUserRole, handleUpdateUserDiscount, handleDeleteUser }: UsersTabProps) {
   const [page, setPage] = useState(1);
   const visibleUsers = usersList.slice((page - 1) * 10, page * 10);
   return (
@@ -32,7 +33,7 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleDelete
                 <th className="p-3">Contact</th>
                 <th className="p-3">Véhicule / Garage</th>
                 <th className="p-3">Rôle</th>
-                {/* <th className="p-3">Remise Pro</th> */}
+                <th className="p-3">Remise </th>
                 {/* <th className="p-3">Points</th> */}
                 <th className="p-3 text-right">Actions</th>
               </tr>
@@ -61,7 +62,24 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleDelete
                       <option value="admin">Administrateur</option>
                     </select>
                   </td>
-                  {/* <td className="p-3 font-mono font-bold text-amber-700 text-xs">-{u.discountRate || 5}%</td> */}
+                  <td className="p-3">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        defaultValue={u.discountRate || 0}
+                        onBlur={e => {
+                          const newRate = parseInt(e.target.value, 10);
+                          if (!isNaN(newRate) && newRate !== (u.discountRate || 0)) {
+                            handleUpdateUserDiscount?.(u._id, newRate);
+                          }
+                        }}
+                        className="w-16 px-2 py-1 text-xs border border-slate-300 rounded font-mono font-bold"
+                      />
+                      <span className="text-xs text-slate-500 font-bold">%</span>
+                    </div>
+                  </td>
                   {/* <td className="p-3 font-mono font-bold text-slate-800 text-xs">{u.loyaltyPoints || 0} pts</td> */}
                   <td className="p-3 text-right">
                     <button onClick={() => handleDeleteUser(u._id, u.email)} className="px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded border border-red-200 transition-colors">Supprimer</button>

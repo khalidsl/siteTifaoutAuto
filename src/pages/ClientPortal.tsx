@@ -75,16 +75,21 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
     const invoiceNumber = order.orderNumber || `CMD-${String(order._id).slice(-6).toUpperCase()}`;
-    const totalHt = Number(order.total || 0);
-    const vat = totalHt * 0.2;
-    const totalTtc = totalHt + vat;
-    const rows = ((order.items as ApiOrderItem[]) || []).map((item) => `
+    const orderDiscountRate = Number((order as any).discountRate || 0);
+    const invoiceItems = (order.items as ApiOrderItem[]) || [];
+    const htApresRemise = invoiceItems.reduce((s, i) => s + Number(i.price || 0) * Number(i.qty || 0), 0);
+    const htBrut = orderDiscountRate > 0 ? Math.round(htApresRemise / (1 - orderDiscountRate / 100)) : htApresRemise;
+    const remiseMontant = htBrut - htApresRemise;
+    const vatAmt = Math.round(htApresRemise * 0.2);
+    const totalTtc = htApresRemise + vatAmt;
+    const rows = invoiceItems.map((item) => `
       <tr>
         <td>${escapeHtml(item.productName)}</td>
         <td>${escapeHtml(item.productRef || '-')}</td>
         <td class="number">${item.qty}</td>
         <td class="number">${Number(item.price || 0).toLocaleString('fr-MA')} MAD</td>
         <td class="number">${(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td>
+      </tr>
     `).join('');
 
     invoiceWindow.document.write(`<!doctype html>
@@ -99,7 +104,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
         .muted{color:#64748b}.box{background:#fff;border:1px solid #6aa8ff;border-radius:9px;padding:11px;margin-top:16px;min-width:220px}
         .meta{display:grid;grid-template-columns:1fr 1fr;gap:3px 24px;margin-top:14px}.meta strong{color:#334155}.invoice-title{color:#0b4f82;font-size:15px;font-weight:bold;text-transform:uppercase}
         table{width:100%;border-collapse:collapse;margin-top:15px;border:1px solid #334155}th,td{padding:6px 7px;border:1px solid #94a3b8;text-align:left}th{background:#dbeafe;color:#172033;font-size:9px;text-transform:uppercase;text-align:center}.number{text-align:right}
-        .totals{margin-left:auto;margin-top:16px;width:280px;border-top:1px solid #64748b}.totals div{display:flex;justify-content:space-between;padding:5px 0}.totals .grand-total{border-top:2px solid #172033;font-size:15px;font-weight:bold;padding-top:7px}.footer{position:fixed;left:18mm;right:18mm;bottom:10mm;margin:0;padding:10px 0 0;border-top:1px solid #94a3b8;color:#475569;font-size:9px;text-align:center}.footer-bar{display:none}
+        .totals{margin-left:auto;margin-top:16px;width:300px;border-top:1px solid #64748b}.totals div{display:flex;justify-content:space-between;padding:5px 0}.totals .grand-total{border-top:2px solid #172033;font-size:15px;font-weight:bold;padding-top:7px}.discount-badge{display:inline-block;background:#dcfce7;color:#15803d;font-size:9px;font-weight:bold;padding:2px 7px;border-radius:4px;border:1px solid #86efac;margin-bottom:4px}.discount-row{color:#16a34a!important;font-weight:bold}.footer{position:fixed;left:18mm;right:18mm;bottom:10mm;margin:0;padding:10px 0 0;border-top:1px solid #94a3b8;color:#475569;font-size:9px;text-align:center}.footer-bar{display:none}
         @media print{body{padding:16mm 18mm 30mm}}
       </style></head><body>
         <div class="header"><div class="brand"><img src="${logoUrl}" alt="TIFAOUT AUTO"><div class="brand-copy"><h1>TIFAOUT AUTO</h1><div class="muted">Injection Diesel · Agadir</div></div></div>
@@ -108,7 +113,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
         : (order.date || '—')}</span><strong>Statut :</strong><span>${escapeHtml(order.status)}</span></div></div></div>
         <div class="box"><strong>FACTURÉ À</strong><br>${escapeHtml(order.guestInfo?.firstName)} ${escapeHtml(order.guestInfo?.lastName)}<br>${escapeHtml(order.guestInfo?.email)} · ${escapeHtml(order.guestInfo?.phone)}<br>${escapeHtml(order.guestInfo?.address)}, ${escapeHtml(order.guestInfo?.city)}</div>
         <h2>Détail de la commande</h2><table><thead><tr><th>Produit</th><th>Référence</th><th class="number">Qté</th><th class="number">Prix unitaire HT</th><th class="number">Total HT</th></tr></thead><tbody>${rows}</tbody></table>
-        <div class="totals"><div><span>Total HT</span><strong>${totalHt.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vat.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${totalTtc.toLocaleString('fr-MA')} MAD</strong></div></div>
+        <div class="totals">${orderDiscountRate > 0 ? `<div style="padding-bottom:2px"></div><div><span>Sous-total brut HT</span><strong>${htBrut.toLocaleString('fr-MA')} MAD</strong></div><div class="discount-row"><span>Remise -${orderDiscountRate}%</span><strong>− ${remiseMontant.toLocaleString('fr-MA')} MAD</strong></div>` : ''}<div><span>Total HT${orderDiscountRate > 0 ? ' après remise' : ''}</span><strong>${htApresRemise.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vatAmt.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${totalTtc.toLocaleString('fr-MA')} MAD</strong></div></div>
         <div class="footer">Mode de règlement : ${escapeHtml(order.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement')} · Facture acquittée<br>TIFAOUT AUTO · Réparation & Pièces Injection Diesel · Agadir, Maroc · 70 Bd Abdelkrim EL Khattabi · 05 25 20 06 65</div>
       </body></html>`);
     invoiceWindow.document.close();
@@ -133,13 +138,17 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
       .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     const sections = paidOrders.map((order: Order) => {
       const invoiceNumber = order.orderNumber || `CMD-${String(order._id).slice(-6).toUpperCase()}`;
-      const totalHt = Number(order.total || 0);
-      const vat = totalHt * 0.2;
-      const totalTtc = totalHt + vat;
-      const rows = ((order.items as ApiOrderItem[]) || []).map((item) => `<tr><td>${escapeHtml(item.productName)}</td><td>${escapeHtml(item.productRef || '-')}</td><td class="number">${item.qty}</td><td class="number">${Number(item.price || 0).toLocaleString('fr-MA')} MAD</td><td class="number">${(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td></tr>`).join('');
-      return `<section class="invoice"><div class="header"><div class="brand"><img src="${logoUrl}" alt="TIFAOUT AUTO"><div><h1>TIFAOUT AUTO</h1><div class="muted">Injection Diesel · Agadir</div></div></div><div><div class="invoice-title">Facture d’achat</div><span class="muted">N° ${escapeHtml(invoiceNumber)}</span><br><span class="muted">${new Date(order.createdAt || order.date || Date.now()).toLocaleDateString('fr-FR')}</span></div></div><div class="box"><strong>FACTURÉ À</strong><br>${escapeHtml(order.guestInfo?.firstName)} ${escapeHtml(order.guestInfo?.lastName)}<br>${escapeHtml(order.guestInfo?.email)} · ${escapeHtml(order.guestInfo?.phone)}<br>${escapeHtml(order.guestInfo?.address)}, ${escapeHtml(order.guestInfo?.city)}</div><table><thead><tr><th>Produit</th><th>Référence</th><th>Qté</th><th>Prix unitaire HT</th><th>Total HT</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>Total HT</span><strong>${totalHt.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vat.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${totalTtc.toLocaleString('fr-MA')} MAD</strong></div></div><div class="footer">Paiement : ${escapeHtml(order.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement')} · Facture acquittée<br>TIFAOUT AUTO · Réparation & Pièces Injection Diesel · Agadir, Maroc · 70 Bd Abdelkrim EL Khattabi · 05 25 20 06 65</div></section>`;
+      const dr = Number((order as any).discountRate || 0);
+      const items2 = (order.items as ApiOrderItem[]) || [];
+      const htApres2 = items2.reduce((s, i) => s + Number(i.price || 0) * Number(i.qty || 0), 0);
+      const htBrut2 = dr > 0 ? Math.round(htApres2 / (1 - dr / 100)) : htApres2;
+      const remise2 = htBrut2 - htApres2;
+      const vat2 = Math.round(htApres2 * 0.2);
+      const ttc2 = htApres2 + vat2;
+      const rows = items2.map((item) => `<tr><td>${escapeHtml(item.productName)}</td><td>${escapeHtml(item.productRef || '-')}</td><td class="number">${item.qty}</td><td class="number">${Number(item.price || 0).toLocaleString('fr-MA')} MAD</td><td class="number">${(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td></tr>`).join('');
+      return `<section class="invoice"><div class="header"><div class="brand"><img src="${logoUrl}" alt="TIFAOUT AUTO"><div><h1>TIFAOUT AUTO</h1><div class="muted">Injection Diesel · Agadir</div></div></div><div><div class="invoice-title">Facture d’achat</div><span class="muted">N° ${escapeHtml(invoiceNumber)}</span><br><span class="muted">${new Date(order.createdAt || order.date || Date.now()).toLocaleDateString('fr-FR')}</span></div></div><div class="box"><strong>FACTURÉ À</strong><br>${escapeHtml(order.guestInfo?.firstName)} ${escapeHtml(order.guestInfo?.lastName)}<br>${escapeHtml(order.guestInfo?.email)} · ${escapeHtml(order.guestInfo?.phone)}<br>${escapeHtml(order.guestInfo?.address)}, ${escapeHtml(order.guestInfo?.city)}</div><table><thead><tr><th>Produit</th><th>Référence</th><th>Qté</th><th>Prix unitaire HT</th><th>Total HT</th></tr></thead><tbody>${rows}</tbody></table><div class="totals">${dr > 0 ? `<div style="padding-bottom:2px"><span class="discount-badge">🏷️ Remise Pro -${dr}%</span></div><div><span>Sous-total brut HT</span><strong>${htBrut2.toLocaleString('fr-MA')} MAD</strong></div><div class="discount-row"><span>Remise -${dr}%</span><strong>− ${remise2.toLocaleString('fr-MA')} MAD</strong></div>` : ''}<div><span>Total HT${dr > 0 ? ' après remise' : ''}</span><strong>${htApres2.toLocaleString('fr-MA')} MAD</strong></div><div><span>TVA (20 %)</span><strong>${vat2.toLocaleString('fr-MA')} MAD</strong></div><div class="grand-total"><span>Net à payer TTC</span><strong>${ttc2.toLocaleString('fr-MA')} MAD</strong></div></div><div class="footer">Paiement : ${escapeHtml(order.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement')} · Facture acquittée<br>TIFAOUT AUTO · Réparation & Pièces Injection Diesel · Agadir, Maroc · 70 Bd Abdelkrim EL Khattabi · 05 25 20 06 65</div></section>`;
     }).join('');
-    invoiceWindow.document.write(`<!doctype html><html lang="fr"><head><meta charset="UTF-8"><title>Factures TIFAOUT AUTO</title><style>@page{size:A4;margin:0}body{font-family:Arial,sans-serif;color:#172033;margin:0;padding:16mm 18mm 12mm;font-size:11px;position:relative}body:before{content:"";position:fixed;z-index:-1;left:12%;top:28%;width:600px;height:600px;background:url('${logoUrl}') center/contain no-repeat;opacity:.045;filter:grayscale(1)}body:after{content:"TIFAOUT AUTO";position:fixed;z-index:-1;left:50%;top:52%;transform:translate(-50%,-50%) rotate(-28deg);font-size:74px;font-weight:900;letter-spacing:8px;color:#1684c7;opacity:.055;white-space:nowrap}.invoice{height:252mm;box-sizing:border-box;display:flex;flex-direction:column;position:relative;page-break-after:always;overflow:hidden}.invoice:last-child{page-break-after:auto}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #1684c7;padding-bottom:12px}.brand{display:flex;align-items:center;gap:12px}.brand img{width:155px;height:62px;object-fit:contain;object-position:left center}h1{margin:0 0 5px;font-size:22px}.invoice-title{color:#0b4f82;font-size:15px;font-weight:bold;text-transform:uppercase}.muted{color:#64748b}.box{background:#fff;border:1px solid #6aa8ff;border-radius:9px;padding:11px;margin:16px 0}table{width:100%;border-collapse:collapse;margin-top:15px;border:1px solid #334155}th,td{padding:6px 7px;border:1px solid #94a3b8;text-align:left}th{background:#dbeafe;color:#172033;font-size:9px;text-transform:uppercase;text-align:center}.number{text-align:right}.totals{margin:16px 0 0 auto;width:280px;border-top:1px solid #64748b}.totals div{display:flex;justify-content:space-between;padding:5px 0}.totals .grand-total{border-top:2px solid #172033;font-size:15px;font-weight:bold;padding-top:7px}.footer{margin-top:auto;padding:10px 0 12px;border-top:1px solid #94a3b8;color:#475569;font-size:9px;text-align:center}.footer-bar{position:absolute;left:0;right:0;bottom:0;margin:0;padding:8px;background:#1684c7;color:#fff;text-align:center;font-size:10px}@media print{body{padding:16mm 18mm 12mm}}</style></head><body>${sections}</body></html>`);
+    invoiceWindow.document.write(`<!doctype html><html lang="fr"><head><meta charset="UTF-8"><title>Factures TIFAOUT AUTO</title><style>@page{size:A4;margin:0}body{font-family:Arial,sans-serif;color:#172033;margin:0;padding:16mm 18mm 12mm;font-size:11px;position:relative}body:before{content:"";position:fixed;z-index:-1;left:12%;top:28%;width:600px;height:600px;background:url('${logoUrl}') center/contain no-repeat;opacity:.045;filter:grayscale(1)}body:after{content:"TIFAOUT AUTO";position:fixed;z-index:-1;left:50%;top:52%;transform:translate(-50%,-50%) rotate(-28deg);font-size:74px;font-weight:900;letter-spacing:8px;color:#1684c7;opacity:.055;white-space:nowrap}.invoice{height:252mm;box-sizing:border-box;display:flex;flex-direction:column;position:relative;page-break-after:always;overflow:hidden}.invoice:last-child{page-break-after:auto}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #1684c7;padding-bottom:12px}.brand{display:flex;align-items:center;gap:12px}.brand img{width:155px;height:62px;object-fit:contain;object-position:left center}h1{margin:0 0 5px;font-size:22px}.invoice-title{color:#0b4f82;font-size:15px;font-weight:bold;text-transform:uppercase}.muted{color:#64748b}.box{background:#fff;border:1px solid #6aa8ff;border-radius:9px;padding:11px;margin:16px 0}table{width:100%;border-collapse:collapse;margin-top:15px;border:1px solid #334155}th,td{padding:6px 7px;border:1px solid #94a3b8;text-align:left}th{background:#dbeafe;color:#172033;font-size:9px;text-transform:uppercase;text-align:center}.number{text-align:right}.totals{margin:16px 0 0 auto;width:310px;border-top:1px solid #64748b}.totals div{display:flex;justify-content:space-between;padding:5px 0}.totals .grand-total{border-top:2px solid #172033;font-size:15px;font-weight:bold;padding-top:7px}.discount-badge{display:inline-block;background:#dcfce7;color:#15803d;font-size:9px;font-weight:bold;padding:2px 7px;border-radius:4px;border:1px solid #86efac;margin-bottom:4px}.discount-row{color:#16a34a;font-weight:bold}.footer{margin-top:auto;padding:10px 0 12px;border-top:1px solid #94a3b8;color:#475569;font-size:9px;text-align:center}.footer-bar{position:absolute;left:0;right:0;bottom:0;margin:0;padding:8px;background:#1684c7;color:#fff;text-align:center;font-size:10px}@media print{body{padding:16mm 18mm 12mm}}</style></head><body>${sections}</body></html>`);
     invoiceWindow.document.close();
     const invoiceImages = Array.from(invoiceWindow.document.images);
     Promise.all(invoiceImages.map(image => image.complete ? Promise.resolve() : new Promise<void>(resolve => {
@@ -474,12 +483,12 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
               {discountRate > 0 && (
                 <div className="mt-6 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  {/* <div>
-                    <p className="text-sm font-bold text-amber-900">Remise Pro appliquée automatiquement</p>
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">Remise  appliquée automatiquement</p>
                     <p className="text-xs text-amber-700 mt-0.5">
                       Toutes vos commandes en ligne bénéficient de cette remise sur les tarifs affichés.
                     </p>
-                  </div> */}
+                  </div>
                   <span className="font-display text-2xl font-extrabold text-amber-700 font-mono shrink-0">
                     -{discountRate}%
                   </span>

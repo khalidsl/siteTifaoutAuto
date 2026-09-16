@@ -10,7 +10,7 @@ const logger = require('../utils/logger');
 // @access Public
 exports.createOrder = async (req, res) => {
   try {
-    const { isGuest, guestInfo, items } = req.body;
+    const { isGuest, guestInfo, items, discountRate } = req.body;
 
     // 1. ─── Vérification et authentification du compte ───────────────
     let verifiedUserId = null;
@@ -53,10 +53,15 @@ exports.createOrder = async (req, res) => {
       }
 
       const qty = Math.max(1, parseInt(item.qty, 10) || 1);
+      // Ensure we use the actual unit price, but if a discount rate applies, we need to respect it or calculate it.
+      // Wait, Cart.tsx computes discounted price and sends it. We can recalculate it here based on product.price and discountRate.
       const realPrice = Number(product.price);
       if (!Number.isFinite(realPrice) || realPrice < 0) {
         return res.status(400).json({ message: `Prix invalide pour le produit ${product.name}.` });
       }
+
+      const validDiscountRate = Number(discountRate) || 0;
+      const finalPrice = validDiscountRate > 0 ? Math.round(realPrice * (1 - validDiscountRate / 100)) : realPrice;
 
       // Vérification immédiate de la disponibilité du stock
       if (product.stock !== undefined && product.stock !== null && product.stock < qty) {
@@ -71,20 +76,22 @@ exports.createOrder = async (req, res) => {
         productName: product.name,
         productRef: product.reference || '',
         qty,
-        price: realPrice,
+        price: finalPrice,
       });
 
-      computedSubtotal += realPrice * qty;
+      computedSubtotal += finalPrice * qty;
     }
 
     // Calcul des frais de livraison : gratuit au-delà de 2000 MAD, sinon 50 MAD
     const shipping = computedSubtotal > 2000 ? 0 : 50;
+    
     const computedTotal = computedSubtotal + shipping;
 
     // 3. ─── Enregistrement de la commande avec prix vérifiés ──────────
     const order = new Order({
       isGuest: orderIsGuest,
       user: orderIsGuest ? null : verifiedUserId,
+      discountRate: Number(discountRate) || 0,
       guestInfo,
       items: verifiedItems,
       total: computedTotal,

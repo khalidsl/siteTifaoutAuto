@@ -300,6 +300,48 @@ export default function Auth({ navigate }: AuthProps) {
                   <input type="text" placeholder="Peugeot, Renault..." value={regData.vehicleBrand} onChange={e => setRegData(p => ({ ...p, vehicleBrand: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
                 </div>
               </div>
+                            {/* <div className="mb-4">
+                <label className="block text-xs uppercase font-semibold text-slate-600 mb-2">Type de compte</label>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="accountType" value="personnel" checked={regData.accountType === 'personnel'} onChange={() => setRegData(p => ({ ...p }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+                    <span className="text-sm text-slate-700 font-medium">Personnel</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="accountType" value="societe" checked={regData.accountType === 'societe'} onChange={() => setRegData(p => ({ ...p, accountType: 'societe' }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+                    <span className="text-sm text-slate-700 font-medium">Société (Pro)</span>
+                  </label>
+                </div>
+              </div>
+              
+              {regData.accountType === 'societe' && (
+                <div className="mb-4">
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Nom de la société</label>
+                  <input required type="text" placeholder="Raison sociale" value={regData.companyName} onChange={e => setRegData(p => ({ ...p, companyName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                </div>
+              )}
+
+                            <div className="mb-4">
+                <label className="block text-xs uppercase font-semibold text-slate-600 mb-2">Type de compte</label>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="accountType" value="personnel" checked={regData.accountType === 'personnel'} onChange={() => setRegData(p => ({ ...p }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+                    <span className="text-sm text-slate-700 font-medium">Personnel</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="accountType" value="societe" checked={regData.accountType === 'societe'} onChange={() => setRegData(p => ({ ...p, accountType: 'societe' }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+                    <span className="text-sm text-slate-700 font-medium">Société (Pro)</span>
+                  </label>
+                </div>
+              </div>
+              
+              {regData.accountType === 'societe' && (
+                <div className="mb-4">
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Nom de la société</label>
+                  <input required type="text" placeholder="Raison sociale" value={regData.companyName} onChange={e => setRegData(p => ({ ...p, companyName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                </div>
+              )} */}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Mot de passe</label>
