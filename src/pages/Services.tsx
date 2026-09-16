@@ -96,7 +96,7 @@ const EQUIPEMENTS = [
     name: "Banc Bosch DCI 200",
     desc: "Diagnostic certifié, test de pression jusqu'à 2700 bar et génération des codes IMA/NIMA pour injecteurs Common Rail solénoïde et piézo.",
     badge: "BANC OFFICIEL BOSCH",
-    img: "/images/tifaout-bosch-dci200.jpg",
+    img: "https://res.cloudinary.com/dgv5kksja/image/upload/v1789575941/tifaout-auto-assets/tifaout-bosch-dci200.jpg",
   },
   {
     name: "Banc d'Essai Pompes CR",

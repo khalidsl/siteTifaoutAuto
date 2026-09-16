@@ -12,7 +12,7 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     id: 1,
-    url: '/images/tifaout-bosch-dci200.jpg',
+    url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1789575941/tifaout-auto-assets/tifaout-bosch-dci200.jpg',
     title: 'Notre Banc Officiel Bosch DCI 200 à Agadir',
     subtitle: 'Équipement certifié Bosch pour diagnostic haute précision, test et calibrage officiel des injecteurs diesel.',
     badge: 'BANC OFFICIEL BOSCH DCI 200',
