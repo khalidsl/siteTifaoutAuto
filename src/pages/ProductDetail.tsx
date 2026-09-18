@@ -3,6 +3,7 @@ import type { Page, CartItem } from '../types';
 import { getCategoryLabel } from '../data/products';
 import { getProductByIdApi, getProductsApi } from '../services/api';
 import { resolveMediaUrl } from '../utils/media';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProductDetailProps {
   productId: string;
@@ -15,6 +16,7 @@ interface ProductDetailProps {
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=400&fit=crop&auto=format';
 
 export default function ProductDetail({ productId, navigate, cart: _cart, onAddToCart, onProductSelect }: ProductDetailProps) {
+  const { dict, language } = useLanguage();
   const [product, setProduct] = useState<any>(null);
   const [related, setRelated] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
         }
       } catch (err: any) {
         if (!cancelled) {
-          setError(err.message || 'Produit introuvable.');
+          setError(err.message || dict.common.error);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -57,8 +59,8 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
     };
 
     loadProduct();
-    setQty(1); // reset qty on product change
-    setActiveImg(0); // reset image index
+    setQty(1);
+    setActiveImg(0);
 
     return () => { cancelled = true; };
   }, [productId]);
@@ -102,7 +104,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
       <div className="min-h-screen bg-slate-100 flex items-center justify-center pt-28 pb-16">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm text-slate-500 font-semibold">Chargement du produit...</p>
+          <p className="text-sm text-slate-500 font-semibold">{dict.common.loading}</p>
         </div>
       </div>
     );
@@ -112,9 +114,9 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center pt-28 pb-16">
         <div className="text-center bg-white p-8 rounded-xl shadow-md border border-slate-200">
-          <p className="text-lg font-bold text-slate-800 mb-4">{error || 'Produit introuvable.'}</p>
+          <p className="text-lg font-bold text-slate-800 mb-4">{error || dict.common.error}</p>
           <button onClick={() => navigate('catalog')} className="text-sm font-bold text-blue-600 hover:underline">
-            ← Retour au catalogue
+            ← {dict.common.back} {dict.productDetail.breadcrumbCatalog}
           </button>
         </div>
       </div>
@@ -145,7 +147,6 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
 
   const images = rawImages.map(img => resolveMediaUrl(img, defaultImg));
 
-  // Map backend format to frontend CartItem product structure
   const cartProduct = {
     id: product._id,
     ref: product.reference,
@@ -157,10 +158,12 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
     images: images,
     compatible: product.compatibleVehicles || [],
     description: product.description || '',
-    features: [], // backend doesn't have an array of features yet
+    features: [],
     inStock: product.stock > 0,
     isReconditioned: product.isReconditioned || false,
   };
+
+  const inStock = product.stock > 0;
 
   const handleAdd = () => {
     if (!inStock) return;
@@ -176,7 +179,6 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
   };
 
   const savings = product.oldPrice ? product.oldPrice - product.price : 0;
-  const inStock = product.stock > 0;
 
   const handlePrevImg = () => {
     setActiveImg((prev) => (prev > 0 ? prev - 1 : images.length - 1));
@@ -197,10 +199,12 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
             className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-bold text-blue-600 hover:bg-blue-50 hover:text-blue-800 transition-colors"
           >
             <span aria-hidden="true" className="text-base leading-none">←</span>
-            Retour
+            {dict.common.back}
           </button>
           <span>/</span>
-          <button onClick={() => navigate('catalog')} className="hover:text-blue-600">Catalogue</button>
+          <button onClick={() => navigate('catalog')} className="hover:text-blue-600">
+            {dict.productDetail.breadcrumbCatalog}
+          </button>
           <span>/</span>
           <span className="text-slate-900 font-bold truncate">{product.name}</span>
         </div>
@@ -228,19 +232,19 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                 )}
                 {product.isReconditioned && (
                   <span className="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded bg-amber-500 text-slate-950 shadow">
-                    Reconditionné OEM
+                    {dict.common.reconditionedOem}
                   </span>
                 )}
                 {product.isNewPart && !product.isReconditioned && (
                   <span className="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded bg-green-600 text-white shadow">
-                    Pièce Neuve
+                    {dict.common.newPart}
                   </span>
                 )}
               </div>
 
               {/* Multiple images indicator */}
               {images.length > 1 && (
-                <div className="absolute bottom-4 right-4 bg-slate-900/75 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm z-10">
+                <div className="absolute bottom-4 right-4 bg-slate-900/75 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm z-10 font-mono">
                   {activeImg + 1} / {images.length}
                 </div>
               )}
@@ -289,7 +293,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                       className="w-full h-full object-contain p-1"
                       onError={e => { (e.target as HTMLImageElement).src = defaultImg; }}
                     />
-                    <div className="absolute bottom-1 right-1 bg-slate-900/60 text-white text-[9px] font-bold px-1 rounded">
+                    <div className="absolute bottom-1 right-1 bg-slate-900/60 text-white text-[9px] font-bold px-1 rounded font-mono">
                       #{i + 1}
                     </div>
                   </button>
@@ -315,34 +319,36 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
               <div className="flex items-center gap-2 mb-6">
                 <span className={`w-2.5 h-2.5 rounded-full ${inStock ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span className={`text-xs font-bold uppercase ${inStock ? 'text-green-700' : 'text-red-700'}`}>
-                  {inStock ? `En Stock (${product.stock}) — Expédition 24h` : (product.remarque || 'Rupture de stock — Non disponible actuellement')}
+                  {inStock ? `${dict.common.inStock} (${product.stock}) — ${dict.productDetail.stockIn24h}` : (product.remarque || dict.productDetail.stockOut)}
                 </span>
               </div>
 
               {/* Price */}
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
                 <span className="font-display text-4xl sm:text-5xl font-extrabold text-slate-900">
-                  {product.price != null ? product.price.toLocaleString('fr-MA') : 'Sur demande'}
+                  {product.price != null ? product.price.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA') : dict.common.priceOnRequest}
                 </span>
-                {product.price != null && <span className="text-xl font-bold text-slate-500">MAD</span>}
+                {product.price != null && <span className="text-xl font-bold text-slate-500">{dict.common.mad}</span>}
                 {product.oldPrice != null && (
-                  <span className="text-lg text-slate-400 line-through font-mono">{product.oldPrice.toLocaleString('fr-MA')} MAD</span>
+                  <span className="text-lg text-slate-400 line-through font-mono">
+                    {product.oldPrice.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} {dict.common.mad}
+                  </span>
                 )}
               </div>
 
               {savings > 0 && (
                 <p className="text-xs font-bold text-amber-700 bg-amber-50 p-2.5 rounded border border-amber-200 mb-6">
-                  Économie : {savings.toLocaleString('fr-MA')} MAD par rapport au prix neuf constructeur
+                  {dict.productDetail.savingsLabel} {savings.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} {dict.productDetail.savingsUnit}
                 </p>
               )}
 
               <p className="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap line-clamp-3">
-                {product.description || 'Aucune description disponible pour ce produit.'}
+                {product.description || dict.productDetail.noDesc}
               </p>
 
               {product.remarque && !inStock && (
                 <p className="text-xs font-bold text-slate-700 bg-slate-100 p-3 rounded mb-6">
-                  Remarque : {product.remarque}
+                  {product.remarque}
                 </p>
               )}
             </div>
@@ -361,7 +367,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                   disabled={!inStock}
                   className="flex-1 min-h-11 py-3 text-xs font-extrabold tracking-widest uppercase rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white shadow transition-all"
                 >
-                  {addedFeedback ? '✓ Ajouté au panier' : (!inStock && !product.remarque ? 'Rupture de stock' : 'Ajouter au Panier')}
+                  {addedFeedback ? dict.common.addedToCart : (!inStock && !product.remarque ? dict.common.outOfStock : dict.common.addToCart)}
                 </button>
               </div>
 
@@ -370,22 +376,22 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                 disabled={!inStock}
                 className="w-full min-h-12 py-3.5 text-xs font-extrabold tracking-widest uppercase rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 shadow transition-colors"
               >
-                Commander directement (Invité Sans Compte) →
+                {dict.productDetail.guestOrderBtn}
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 text-center">
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
                 <span className="block text-blue-600 text-lg font-bold">24h</span>
-                <span className="text-[10px] font-bold uppercase text-slate-500">Expédition rapide</span>
+                <span className="text-[10px] font-bold uppercase text-slate-500">{dict.productDetail.fastShip}</span>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
                 <span className="block text-blue-600 text-lg font-bold">✓</span>
-                <span className="text-[10px] font-bold uppercase text-slate-500">Pièce contrôlée</span>
+                <span className="text-[10px] font-bold uppercase text-slate-500">{dict.productDetail.controlled}</span>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
-                <span className="block text-blue-600 text-lg font-bold">MAD</span>
-                <span className="text-[10px] font-bold uppercase text-slate-500">Paiement a la livraison</span>
+                <span className="block text-blue-600 text-lg font-bold">{dict.common.mad}</span>
+                <span className="text-[10px] font-bold uppercase text-slate-500">{dict.productDetail.cod}</span>
               </div>
             </div>
           </div>
@@ -403,7 +409,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                   : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
               }`}
             >
-              Description Complète
+              {dict.productDetail.fullDescription}
             </button>
             <button
               onClick={() => setActiveTab('vehicules')}
@@ -413,9 +419,9 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                   : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
               }`}
             >
-              Véhicules Compatibles
+              {dict.productDetail.compatibility}
               {(product.compatibleVehicles || []).length > 0 && (
-                <span className="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">
+                <span className="ml-2 mr-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-mono">
                   {(product.compatibleVehicles || []).length}
                 </span>
               )}
@@ -428,9 +434,9 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                   : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
               }`}
             >
-              Références Compatibles
+              {dict.productDetail.compatibleRefs}
               {(product.compatibleReferences || []).length > 0 && (
-                <span className="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">
+                <span className="ml-2 mr-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-mono">
                   {(product.compatibleReferences || []).length}
                 </span>
               )}
@@ -444,7 +450,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                 {product.description ? (
                   <p className="whitespace-pre-wrap leading-relaxed">{product.description}</p>
                 ) : (
-                  <p className="italic text-slate-400">Aucune description détaillée disponible pour ce produit.</p>
+                  <p className="italic text-slate-400">{dict.productDetail.noDesc}</p>
                 )}
               </div>
             )}
@@ -461,7 +467,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                     ))}
                   </div>
                 ) : (
-                  <p className="italic text-slate-400">Aucune information de compatibilité véhicule disponible.</p>
+                  <p className="italic text-slate-400">{dict.productDetail.noVehicles}</p>
                 )}
               </>
             )}
@@ -478,7 +484,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                     ))}
                   </div>
                 ) : (
-                  <p className="italic text-slate-400">Aucune référence croisée disponible pour ce produit.</p>
+                  <p className="italic text-slate-400">{dict.productDetail.noRefs}</p>
                 )}
               </>
             )}
@@ -489,7 +495,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
         {related.length > 0 && (
           <div className="border-t border-slate-200 pt-8">
             <h3 className="font-display text-2xl font-bold uppercase text-slate-900 mb-6">
-              Produits Similaires
+              {dict.productDetail.similarProducts}
             </h3>
             <div
               ref={relatedRailRef}
@@ -511,7 +517,7 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
                     <div className="text-[10px] font-bold uppercase text-slate-400 mb-1">{getCategoryLabel(r.category)}</div>
                     <div className="text-xs font-bold text-slate-900 mb-1 line-clamp-1">{r.name}</div>
                     <div className="font-display text-lg font-bold text-blue-600">
-                      {r.price != null ? `${r.price.toLocaleString('fr-MA')} MAD` : 'Sur demande'}
+                      {r.price != null ? `${r.price.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} ${dict.common.mad}` : dict.common.priceOnRequest}
                     </div>
                   </button>
                 );
@@ -523,4 +529,3 @@ export default function ProductDetail({ productId, navigate, cart: _cart, onAddT
     </div>
   );
 }
-

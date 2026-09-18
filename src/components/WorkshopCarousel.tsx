@@ -1,55 +1,42 @@
 import { useState, useEffect } from 'react';
-import { FaChevronLeft, FaChevronRight, FaExpand, FaCircleCheck } from 'react-icons/fa6';
-
-interface Slide {
-  id: number;
-  url: string;
-  title: string;
-  subtitle: string;
-  badge: string;
-}
-
-const SLIDES: Slide[] = [
-  {
-    id: 1,
-    url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1789575941/tifaout-auto-assets/tifaout-bosch-dci200.jpg',
-    title: 'Notre Banc Officiel Bosch DCI 200 à Agadir',
-    subtitle: 'Équipement certifié Bosch pour diagnostic haute précision, test et calibrage officiel des injecteurs diesel.',
-    badge: 'BANC OFFICIEL BOSCH DCI 200',
-  },
-  // {
-  //   id: 2,
-  //   url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803622/tifaout-auto-assets/nnp3vydb0y4qmymh5mwd.jpg',
-  //   title: 'Diagnostic & Test Common Rail Multimarque',
-  //   subtitle: 'Mesure exacte des débits de pré-injection, pleine charge et retours de fuite pour Bosch, Delphi, Denso et VDO.',
-  //   badge: 'DIAGNOSTIC COMMON RAIL',
-  // },
-  {
-    id: 2,
-    url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803622/tifaout-auto-assets/v8iqzljptprjr0aesxvk.jpg',
-    title: 'Calibration et Génération des Codes IMA / C2i',
-    subtitle: 'Programmation des codes injecteurs selon spécifications constructeur pour une combustion et performance optimales.',
-    badge: 'CALIBRATION NUMÉRIQUE',
-  },
-  {
-    id: 3,
-    url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803623/tifaout-auto-assets/qgl7pu3me1hkj58xnzfp.jpg',
-    title: 'Nettoyage Ultrasons & Reconditionnement',
-    subtitle: "Démontage minutieux, décalaminage aux ultrasons et remplacement des pièces d'usure par des composants d'origine.",
-    badge: 'RECONDITIONNEMENT À NEUF',
-  },
-  {
-    id: 4,
-    url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803624/tifaout-auto-assets/mp1oiiqef3pyjnixqpma.jpg',
-    title: 'Pompes Haute Pression Diesel',
-    subtitle: 'Révision intégrale et test de pression des pompes CP1, CP3, CP4, DFP et régulateurs de pression DRV.',
-    badge: 'POMPES HAUTE PRESSION',
-  },
-];
+import { FaChevronLeft, FaChevronRight, FaCircleCheck } from 'react-icons/fa6';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function WorkshopCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const { language, isRTL } = useLanguage();
+
+  const SLIDES = [
+    {
+      id: 1,
+      url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1789575941/tifaout-auto-assets/tifaout-bosch-dci200.jpg',
+      title: language === 'ar' ? 'منصة بوش الرسمية Bosch DCI 200 بأكادير' : 'Notre Banc Officiel Bosch DCI 200 à Agadir',
+      subtitle: language === 'ar' ? 'تجهيزات معتمدة من بوش للتشخيص عالي الدقة، فحص وتعيير حاقنات الديزل.' : 'Équipement certifié Bosch pour diagnostic haute précision, test et calibrage officiel des injecteurs diesel.',
+      badge: language === 'ar' ? 'منصة بوش الرسمية BOSCH DCI 200' : 'BANC OFFICIEL BOSCH DCI 200',
+    },
+    {
+      id: 2,
+      url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803622/tifaout-auto-assets/v8iqzljptprjr0aesxvk.jpg',
+      title: language === 'ar' ? 'معايرة وتوليد أكواد IMA / C2i' : 'Calibration et Génération des Codes IMA / C2i',
+      subtitle: language === 'ar' ? 'برمجة أكواد الحاقنات حسب مواصفات المصنع للحصول على أداء واستهلاك مثاليين.' : 'Programmation des codes injecteurs selon spécifications constructeur pour une combustion et performance optimales.',
+      badge: language === 'ar' ? 'معايرة رقمية' : 'CALIBRATION NUMÉRIQUE',
+    },
+    {
+      id: 3,
+      url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803623/tifaout-auto-assets/qgl7pu3me1hkj58xnzfp.jpg',
+      title: language === 'ar' ? 'تنظيف بالموجات فوق الصوتية وتجديد شاملا' : 'Nettoyage Ultrasons & Reconditionnement',
+      subtitle: language === 'ar' ? 'تفكيك دقيق، تنظيف بالموجات فوق الصوتية واستبدال قطع الغيار بأخرى أصلية.' : "Démontage minutieux, décalaminage aux ultrasons et remplacement des pièces d'usure par des composants d'origine.",
+      badge: language === 'ar' ? 'تجديد كامل' : 'RECONDITIONNEMENT À NEUF',
+    },
+    {
+      id: 4,
+      url: 'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803624/tifaout-auto-assets/mp1oiiqef3pyjnixqpma.jpg',
+      title: language === 'ar' ? 'مضخات الديزل ذات الضغط العالي' : 'Pompes Haute Pression Diesel',
+      subtitle: language === 'ar' ? 'صيانة شاملة واختبار ضغط لمضخات CP1, CP3, CP4, DFP ومنظمات DRV.' : 'Révision intégrale et test de pression des pompes CP1, CP3, CP4, DFP et régulateurs de pression DRV.',
+      badge: language === 'ar' ? 'مضخات الضغط العالي' : 'POMPES HAUTE PRESSION',
+    },
+  ];
 
   useEffect(() => {
     if (isHovered) return;
@@ -57,7 +44,7 @@ export default function WorkshopCarousel() {
       setCurrentIndex((prev) => (prev + 1) % SLIDES.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, [isHovered]);
+  }, [isHovered, SLIDES.length]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? SLIDES.length - 1 : prev - 1));
@@ -96,7 +83,7 @@ export default function WorkshopCarousel() {
       ))}
 
       {/* Top Badge Pill */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+      <div className={`absolute top-4 ${isRTL ? 'right-4' : 'left-4'} z-20 flex items-center gap-2`}>
         <span className="px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-md text-amber-400 border border-amber-500/40 text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
           {current.badge}
@@ -104,14 +91,14 @@ export default function WorkshopCarousel() {
       </div>
 
       {/* Slide Counter Pill */}
-      <div className="absolute top-4 right-4 z-20 font-mono text-xs font-bold px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md text-slate-300 border border-slate-700">
+      <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} z-20 font-mono text-xs font-bold px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md text-slate-300 border border-slate-700`}>
         {currentIndex + 1} / {SLIDES.length}
       </div>
 
       {/* Navigation Arrows */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md border border-slate-700 shadow-xl opacity-80 group-hover:opacity-100 transition-all transform hover:scale-110"
+        className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md border border-slate-700 shadow-xl opacity-80 group-hover:opacity-100 transition-all transform hover:scale-110`}
         aria-label="Slide précédente"
       >
         <FaChevronLeft className="text-sm" />
@@ -119,7 +106,7 @@ export default function WorkshopCarousel() {
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md border border-slate-700 shadow-xl opacity-80 group-hover:opacity-100 transition-all transform hover:scale-110"
+        className={`absolute ${isRTL ? 'left-4' : 'right-4'} top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md border border-slate-700 shadow-xl opacity-80 group-hover:opacity-100 transition-all transform hover:scale-110`}
         aria-label="Slide suivante"
       >
         <FaChevronRight className="text-sm" />

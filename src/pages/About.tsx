@@ -1,13 +1,14 @@
 import { useRef, useEffect, useState } from 'react';
 import type { Page } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 import WorkshopCarousel from '../components/WorkshopCarousel';
 import {
-  FaCircleCheck,
   FaStar,
   FaShieldHalved,
   FaTruckFast,
   FaAward,
   FaArrowRight,
+  FaArrowLeft,
   FaLocationDot,
   FaPhone,
   FaChevronLeft,
@@ -17,20 +18,6 @@ import {
 interface AboutProps {
   navigate: (page: Page) => void;
 }
-
-const STATS = [
-  { val: '9+', label: "Années d'expérience", sub: 'depuis 2015' },
-  { val: '5 000+', label: 'Injecteurs reconditionnés', sub: 'toutes marques' },
-  { val: '4.5★', label: '18 avis Google', sub: 'avis vérifiés' },
-  { val: '24h', label: 'Livraison Maroc', sub: 'expédition rapide' },
-];
-
-const CERTIFICATIONS = [
-  { val: 'Bosch DCI 200', label: "Banc d'essai certifié" },
-  { val: 'ISO 9001', label: 'Qualité reconditionnement' },
-  { val: 'Spécialiste Agréé', label: 'Bosch / Delphi / Denso' },
-  { val: '24h', label: 'Délai moyen atelier' },
-];
 
 const REVIEWS = [
   {
@@ -119,25 +106,16 @@ const REVIEWS = [
   },
 ];
 
-const VALEURS = [
-  {
-    icon: <FaShieldHalved className="text-2xl text-blue-400" />,
-    title: 'Fiabilité',
-    desc: "Chaque pièce reconditionnée est testée sur banc certifié Bosch DCI 200 avant restitution. Résultats mesurés, conformes aux normes constructeur.",
-  },
-  {
-    icon: <FaAward className="text-2xl text-blue-400" />,
-    title: 'Expertise',
-    desc: "Équipe formée et certifiée Bosch. 9 ans de spécialisation exclusive dans l'injection diesel Common Rail — injecteurs, pompes HP, circuits d'alimentation.",
-  },
-  {
-    icon: <FaTruckFast className="text-2xl text-blue-400" />,
-    title: 'Rapidité',
-    desc: "Délai moyen de 24 à 48h en atelier. Expédition sécurisée sur tout le Maroc. Diagnostic express sans rendez-vous à Agadir.",
-  },
-];
-
 export default function About({ navigate }: AboutProps) {
+  const { dict, isRTL, language } = useLanguage();
+  const a = dict.about;
+
+  const VALUE_ICONS = [
+    <FaShieldHalved className="text-2xl text-blue-400" />,
+    <FaAward className="text-2xl text-blue-400" />,
+    <FaTruckFast className="text-2xl text-blue-400" />,
+  ];
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -147,17 +125,16 @@ export default function About({ navigate }: AboutProps) {
     const interval = setInterval(() => {
       if (scrollContainerRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-        // Si on arrive vers la fin, on revient doucement au début
         if (scrollLeft + clientWidth >= scrollWidth - 20) {
           scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          scrollContainerRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+          scrollContainerRef.current.scrollBy({ left: isRTL ? -380 : 380, behavior: 'smooth' });
         }
       }
     }, 3500);
 
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, isRTL]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -177,12 +154,14 @@ export default function About({ navigate }: AboutProps) {
       {/* ── HEADER ── */}
       <div className="bg-slate-800 border-b border-slate-700 text-white py-10 px-6 shadow-inner">
         <div className="max-w-[1440px] mx-auto">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-400 mb-1">Atelier d'injection diesel — Agadir</p>
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-400 mb-1">
+            {language === 'ar' ? 'ورشة حقن الديزل — أكادير' : 'Atelier d’injection diesel — Agadir'}
+          </p>
           <h1 className="font-display text-4xl font-bold uppercase tracking-wide">
-            À Propos de TIFAOUT AUTO
+            {a.headerTitle}
           </h1>
           <p className="text-slate-300 text-sm mt-2 max-w-2xl">
-            Spécialiste agréé Bosch Diesel Service à Agadir depuis plus de 9 ans.
+            {a.headerDesc}
           </p>
         </div>
       </div>
@@ -192,22 +171,22 @@ export default function About({ navigate }: AboutProps) {
         {/* ── QUI SOMMES-NOUS ── */}
         <section className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-3">Notre atelier d'injection à Agadir</p>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-3">{a.subtitle}</p>
             <h2 className="font-display text-4xl font-extrabold uppercase text-slate-900 mb-6">
-              9 ans de précision au service de l'injection diesel au Maroc
+              {a.title}
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed mb-4">
-              TIFAOUT AUTO est le partenaire privilégié des garagistes, transporteurs et particuliers pour le diagnostic et le reconditionnement d'injecteurs Common Rail et pompes haute pression.
+              {a.p1}
             </p>
             <p className="text-slate-600 text-sm leading-relaxed mb-4">
-              Situé au <strong className="text-slate-800">70 Boulevard Abdelkrim El Khattabi, Agadir</strong>, notre atelier Bosch Diesel Service est équipé du banc d'essai certifié <strong className="text-slate-800">Bosch DCI 200</strong> pour garantir la mesure et le réglage exacts des débits selon les normes constructeur.
+              {a.p2}
             </p>
             <p className="text-slate-600 text-sm leading-relaxed mb-8">
-              Nous intervenons sur toutes les marques : <strong className="text-slate-800">Bosch, Delphi, Denso, Zexel, Siemens, VAG</strong>. Notre stock permanent d'injecteurs et pompes reconditionnés permet une livraison 24h sur tout le Maroc.
+              {a.p3}
             </p>
 
             <div className="grid grid-cols-2 gap-4">
-              {CERTIFICATIONS.map(s => (
+              {a.certifications.map(s => (
                 <div key={s.label} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="font-display text-xl font-bold text-blue-900">{s.val}</div>
                   <div className="text-xs text-slate-500 font-semibold mt-1">{s.label}</div>
@@ -224,14 +203,14 @@ export default function About({ navigate }: AboutProps) {
         {/* ── NOS VALEURS ── */}
         <section>
           <div className="mb-8">
-            <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-1">Ce qui nous distingue</p>
-            <h2 className="font-display text-3xl font-extrabold uppercase text-slate-900">Nos Valeurs</h2>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-1">{a.valuesSubtitle}</p>
+            <h2 className="font-display text-3xl font-extrabold uppercase text-slate-900">{a.valuesTitle}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {VALEURS.map((v, i) => (
+            {a.valuesList.map((v, i) => (
               <div key={i} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 group hover:shadow-lg transition-all">
                 <div className="w-14 h-14 rounded-xl bg-slate-100 group-hover:bg-blue-900 flex items-center justify-center mb-5 transition-all">
-                  {v.icon}
+                  {VALUE_ICONS[i]}
                 </div>
                 <h3 className="font-display text-xl font-bold uppercase text-slate-900 mb-3">{v.title}</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">{v.desc}</p>
@@ -244,8 +223,10 @@ export default function About({ navigate }: AboutProps) {
         <section>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
             <div>
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-1">Avis & Témoignages</p>
-              <h2 className="font-display text-3xl font-extrabold uppercase text-slate-900">La Confiance de nos Clients</h2>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-1">
+                {dict.home.reviewsSubtitle}
+              </p>
+              <h2 className="font-display text-3xl font-extrabold uppercase text-slate-900">{a.reviewsTitle}</h2>
             </div>
             
             <div className="flex items-center gap-4">
@@ -253,7 +234,7 @@ export default function About({ navigate }: AboutProps) {
                 <div className="font-display text-2xl font-black text-amber-500">4.5 / 5</div>
                 <div className="text-xs text-slate-600">
                   <div className="flex text-amber-400 text-sm">★★★★½</div>
-                  <div className="font-semibold text-[11px] text-slate-500">18 avis vérifiés Google</div>
+                  <div className="font-semibold text-[11px] text-slate-500">{dict.common.googleReviewsCount}</div>
                 </div>
               </div>
 
@@ -265,7 +246,7 @@ export default function About({ navigate }: AboutProps) {
                   title="Précédent"
                   aria-label="Précédent"
                 >
-                  <FaChevronLeft className="text-sm" />
+                  {isRTL ? <FaChevronRight className="text-sm" /> : <FaChevronLeft className="text-sm" />}
                 </button>
                 <button
                   onClick={scrollRight}
@@ -273,7 +254,7 @@ export default function About({ navigate }: AboutProps) {
                   title="Suivant"
                   aria-label="Suivant"
                 >
-                  <FaChevronRight className="text-sm" />
+                  {isRTL ? <FaChevronLeft className="text-sm" /> : <FaChevronRight className="text-sm" />}
                 </button>
               </div>
             </div>
@@ -323,13 +304,13 @@ export default function About({ navigate }: AboutProps) {
               onClick={scrollLeft}
               className="px-4 py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-bold text-slate-700 active:bg-slate-100"
             >
-              <FaChevronLeft className="text-xs" /> Précédent
+              {isRTL ? <FaChevronRight className="text-xs" /> : <FaChevronLeft className="text-xs" />} {dict.common.prev}
             </button>
             <button
               onClick={scrollRight}
               className="px-4 py-2 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-bold text-slate-700 active:bg-slate-100"
             >
-              Suivant <FaChevronRight className="text-xs" />
+              {dict.common.next} {isRTL ? <FaChevronLeft className="text-xs" /> : <FaChevronRight className="text-xs" />}
             </button>
           </div>
 
@@ -341,7 +322,7 @@ export default function About({ navigate }: AboutProps) {
               className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700 transition-all shadow-sm"
             >
               <FaStar className="text-amber-400" />
-              Voir tous les 18 avis sur Google Maps →
+              {dict.home.reviewsGoogleLink}
             </a>
           </div>
         </section>
@@ -349,12 +330,12 @@ export default function About({ navigate }: AboutProps) {
         {/* ── CTA ── */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 md:p-12 text-center">
           <h3 className="font-display text-3xl font-extrabold uppercase text-slate-900 mb-4">
-            Venez nous rendre visite à Agadir
+            {a.visitTitle}
           </h3>
           <p className="text-slate-600 text-sm max-w-2xl mx-auto mb-2">
-            70 Boulevard Abdelkrim El Khattabi, Agadir 80000 — Lun–Ven 09h–19h, Sam 09h–13h
+            {a.visitAddress}
           </p>
-          <p className="text-slate-500 text-xs mb-8">Diagnostic express sans rendez-vous</p>
+          <p className="text-slate-500 text-xs mb-8">{a.visitBadge}</p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
               href="tel:+212525200665"
@@ -368,8 +349,8 @@ export default function About({ navigate }: AboutProps) {
               className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-widest transition-all shadow-xl flex items-center gap-2 font-mono"
             >
               <FaLocationDot className="text-xs" />
-              Voir le plan & Horaires
-              <FaArrowRight className="text-xs" />
+              <span>{a.viewSchedule}</span>
+              {isRTL ? <FaArrowLeft className="text-xs" /> : <FaArrowRight className="text-xs" />}
             </button>
           </div>
         </div>

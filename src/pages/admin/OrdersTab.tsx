@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getOrderStatusClass, ORDER_STATUSES, type OrderStatus } from '../../utils/orderStatus';
 import Pagination from '../../components/admin/Pagination';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface OrdersTabProps {
   orderList: any[];
@@ -12,6 +13,7 @@ export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderS
   const [page, setPage] = useState(1);
   const visibleOrders = orderList.slice((page - 1) * 10, page * 10);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const { dict } = useLanguage();
 
   const printOrderTicket = (order: any) => {
     const ticketWindow = window.open('', '_blank', 'width=480,height=720');
@@ -31,27 +33,27 @@ export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderS
   return (
     <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="font-display text-2xl font-bold uppercase text-slate-900">Gestion des Commandes Reçues</h2>
+        <h2 className="font-display text-2xl font-bold uppercase text-slate-900">{dict.admin.orders.title}</h2>
         <button
           onClick={exportOrdersToExcel}
           className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm shadow flex items-center gap-2"
         >
-          <span>📥 Exporter en Excel</span>
+          <span>{dict.admin.orders.exportExcel}</span>
         </button>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
+        <table className="w-full text-sm text-left rtl:text-right">
           <thead className="bg-slate-100 text-slate-700 uppercase font-semibold text-xs border-b">
             <tr>
-              <th className="p-3">Réf Commande</th>
-              <th className="p-3">Client (Coordonnées)</th>
-              <th className="p-3">Articles</th>
-              <th className="p-3">Total</th>
-              <th className="p-3">Mode Règlement</th>
-              <th className="p-3">Statut actuel</th>
-              <th className="p-3 text-right">Action Statut</th>
-              <th className="p-3 text-center">Détails</th>
+              <th className="p-3">{dict.admin.orders.table.orderRef}</th>
+              <th className="p-3">{dict.admin.orders.table.clientInfo}</th>
+              <th className="p-3">{dict.admin.orders.table.items}</th>
+              <th className="p-3">{dict.admin.orders.table.total}</th>
+              <th className="p-3">{dict.admin.orders.table.paymentMode}</th>
+              <th className="p-3">{dict.admin.orders.table.status}</th>
+              <th className="p-3 text-right rtl:text-left">{dict.admin.orders.table.statusAction}</th>
+              <th className="p-3 text-center">{dict.admin.orders.table.details}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -77,14 +79,14 @@ export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderS
                   {ord.total.toLocaleString('fr-MA')} MAD
                 </td>
                 <td className="p-3 text-xs uppercase font-semibold text-slate-600">
-                  {ord.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement'}
+                  {ord.guestInfo?.paymentMethod === 'especes' ? 'Espèces' : 'Virement'}
                 </td>
                 <td className="p-3">
                   <span className={`px-2.5 py-1 text-xs font-bold rounded ${getOrderStatusClass(ord.status)}`}>
                     {ord.status}
                   </span>
                 </td>
-                <td className="p-3 text-right">
+                <td className="p-3 text-right rtl:text-left">
                   <select
                     value={ord.status}
                     onChange={e => updateOrderStatus(ord._id, e.target.value as OrderStatus)}
@@ -95,7 +97,7 @@ export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderS
                 </td>
                 <td className="p-3 text-center whitespace-nowrap">
                   <button type="button" onClick={() => setSelectedOrder(ord)} className="mr-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100" title="Voir les détails">
-                    👁 Détails
+                    👁 {dict.admin.orders.table.details}
                   </button>
                   <button type="button" onClick={() => printOrderTicket(ord)} className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100" title="Imprimer le ticket">
                     🖨 Ticket
@@ -111,17 +113,17 @@ export default function OrdersTab({ orderList, exportOrdersToExcel, updateOrderS
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 px-4" onClick={() => setSelectedOrder(null)}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
-              <div><p className="text-xs font-bold uppercase text-blue-600">Détail de la commande</p><h3 className="font-display text-2xl font-bold text-slate-900">{selectedOrder.orderNumber}</h3></div>
+              <div><p className="text-xs font-bold uppercase text-blue-600">{dict.admin.orders.orderDetailsModal.title}</p><h3 className="font-display text-2xl font-bold text-slate-900">{selectedOrder.orderNumber}</h3></div>
               <button type="button" onClick={() => setSelectedOrder(null)} className="text-xl font-bold text-slate-400 hover:text-slate-700" aria-label="Fermer">×</button>
             </div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg bg-slate-50 p-4 text-sm"><h4 className="mb-2 font-bold uppercase text-slate-500">Client</h4><p className="font-bold text-slate-900">{selectedOrder.guestInfo?.firstName} {selectedOrder.guestInfo?.lastName}</p><p>{selectedOrder.guestInfo?.phone}</p><p>{selectedOrder.guestInfo?.email || 'Email non renseigné'}</p></div>
-              <div className="rounded-lg bg-slate-50 p-4 text-sm"><h4 className="mb-2 font-bold uppercase text-slate-500">Livraison & paiement</h4><p>{selectedOrder.guestInfo?.address}</p><p>{selectedOrder.guestInfo?.city}</p><p className="mt-1 font-semibold">{selectedOrder.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement'}</p></div>
+              <div className="rounded-lg bg-slate-50 p-4 text-sm"><h4 className="mb-2 font-bold uppercase text-slate-500">{dict.admin.orders.orderDetailsModal.clientCoords}</h4><p className="font-bold text-slate-900">{selectedOrder.guestInfo?.firstName} {selectedOrder.guestInfo?.lastName}</p><p>{selectedOrder.guestInfo?.phone}</p><p>{selectedOrder.guestInfo?.email || '-'}</p></div>
+              <div className="rounded-lg bg-slate-50 p-4 text-sm"><h4 className="mb-2 font-bold uppercase text-slate-500">{dict.admin.orders.orderDetailsModal.address}</h4><p>{selectedOrder.guestInfo?.address}</p><p>{selectedOrder.guestInfo?.city}</p><p className="mt-1 font-semibold">{selectedOrder.guestInfo?.paymentMethod === 'especes' ? 'Espèces à la livraison' : 'Virement'}</p></div>
             </div>
-            <h4 className="mb-2 mt-6 font-bold uppercase text-slate-500">Articles commandés</h4>
-            <div className="overflow-x-auto rounded-lg border border-slate-200"><table className="w-full text-sm"><thead className="bg-slate-100"><tr><th className="p-3 text-left">Produit</th><th className="p-3 text-left">Référence</th><th className="p-3 text-right">Qté</th><th className="p-3 text-right">Prix</th><th className="p-3 text-right">Total</th></tr></thead><tbody>{(selectedOrder.items || []).map((item: any, index: number) => <tr key={index} className="border-t border-slate-200"><td className="p-3">{item.productName}</td><td className="p-3 font-mono text-xs">{item.productRef || '-'}</td><td className="p-3 text-right">{item.qty}</td><td className="p-3 text-right">{Number(item.price || 0).toLocaleString('fr-MA')} MAD</td><td className="p-3 text-right font-bold">{(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td></tr>)}</tbody></table></div>
+            <h4 className="mb-2 mt-6 font-bold uppercase text-slate-500">{dict.admin.orders.orderDetailsModal.itemsOrdered}</h4>
+            <div className="overflow-x-auto rounded-lg border border-slate-200"><table className="w-full text-sm"><thead className="bg-slate-100"><tr><th className="p-3 text-left rtl:text-right">Produit</th><th className="p-3 text-left rtl:text-right">Référence</th><th className="p-3 text-right rtl:text-left">Qté</th><th className="p-3 text-right rtl:text-left">Prix</th><th className="p-3 text-right rtl:text-left">Total</th></tr></thead><tbody>{(selectedOrder.items || []).map((item: any, index: number) => <tr key={index} className="border-t border-slate-200"><td className="p-3">{item.productName}</td><td className="p-3 font-mono text-xs">{item.productRef || '-'}</td><td className="p-3 text-right rtl:text-left">{item.qty}</td><td className="p-3 text-right rtl:text-left">{Number(item.price || 0).toLocaleString('fr-MA')} MAD</td><td className="p-3 text-right rtl:text-left font-bold">{(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</td></tr>)}</tbody></table></div>
             <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4"><span className="font-bold uppercase text-slate-500">Total commande</span><strong className="font-display text-2xl text-blue-700">{Number(selectedOrder.total || 0).toLocaleString('fr-MA')} MAD</strong></div>
-            <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={() => printOrderTicket(selectedOrder)} className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-blue-700">🖨 Imprimer le ticket</button><button type="button" onClick={() => setSelectedOrder(null)} className="rounded-lg bg-slate-200 px-4 py-2 text-xs font-bold uppercase text-slate-700">Fermer</button></div>
+            <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={() => printOrderTicket(selectedOrder)} className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-blue-700">🖨 {dict.admin.orders.printTicket}</button><button type="button" onClick={() => setSelectedOrder(null)} className="rounded-lg bg-slate-200 px-4 py-2 text-xs font-bold uppercase text-slate-700">Fermer</button></div>
           </div>
         </div>
       )}

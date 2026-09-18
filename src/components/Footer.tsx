@@ -1,33 +1,56 @@
 import type { Page } from '../types';
-import { FaPhone, FaLocationDot, FaStar, FaArrowRight } from 'react-icons/fa6';
+import { useLanguage } from '../context/LanguageContext';
+import { FaPhone, FaLocationDot, FaStar, FaArrowRight, FaArrowLeft } from 'react-icons/fa6';
 
 interface FooterProps {
   navigate: (page: Page) => void;
 }
 
 export default function Footer({ navigate }: FooterProps) {
+  const { dict, isRTL, language } = useLanguage();
+
+  const DAYS = language === 'ar' ? [
+    { day: 'الإثنين', h: '09:30 — 19:00' },
+    { day: 'الثلاثاء', h: '09:30 — 19:00' },
+    { day: 'الأربعاء', h: '09:30 — 19:00' },
+    { day: 'الخميس', h: '09:30 — 19:00' },
+    { day: 'الجمعة', h: '09:30 — 19:00' },
+    { day: 'السبت', h: '09:30 — 13:00' },
+    { day: 'الأحد', h: 'مغلق', closed: true },
+  ] : [
+    { day: 'Lundi', h: '09h30 — 19h00' },
+    { day: 'Mardi', h: '09h30 — 19h00' },
+    { day: 'Mercredi', h: '09h30 — 19h00' },
+    { day: 'Jeudi', h: '09h30 — 19h00' },
+    { day: 'Vendredi', h: '09h30 — 19h00' },
+    { day: 'Samedi', h: '09h30 — 13h00' },
+    { day: 'Dimanche', h: 'Fermé', closed: true },
+  ];
+
   return (
     <footer className="bg-slate-950 text-slate-300 border-t border-slate-800">
       {/* Main footer */}
       <div className="max-w-[1440px] mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
         {/* Brand */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-auto flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="h-14 w-auto flex items-center justify-center shrink-0">
               <img
                 src="https://res.cloudinary.com/dgv5kksja/image/upload/v1788802839/tifaout-auto-assets/zapfz3h04w4afiwryakn.png"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 alt="TIFAOUT AUTO Logo"
-                className="h-full max-h-11 object-contain drop-shadow-md"
+                className="h-full max-h-14 object-contain drop-shadow-md"
               />
             </div>
             <div>
-              <div className="text-xl font-extrabold tracking-wider text-white font-display">TIFAOUT AUTO</div>
-              <div className="text-[9px] tracking-[0.2em] uppercase font-bold text-blue-400">Injection Diesel · Agadir</div>
+              <div className="text-2xl font-black tracking-wider text-white font-display">TIFAOUT AUTO</div>
+              <div className="text-[10px] tracking-[0.2em] uppercase font-bold text-blue-400 mt-0.5">
+                {dict.nav.tagline}
+              </div>
             </div>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Société spécialisée dans la réparation, la révision sur banc d'essai certifié Bosch DCI 200 et la vente de pièces d'injection diesel au Maroc.
+            {dict.footer.desc}
           </p>
           <div className="flex flex-wrap gap-1.5 pt-2">
             {['Bosch', 'Delphi', 'Denso', 'Zexel'].map(b => (
@@ -40,22 +63,23 @@ export default function Footer({ navigate }: FooterProps) {
 
         {/* Navigation */}
         <div>
-          <h4 className="text-xs tracking-widest uppercase font-bold text-white mb-4">Accès Rapides</h4>
+          <h4 className="text-xs tracking-widest uppercase font-bold text-white mb-4">{dict.footer.quickLinks}</h4>
           <ul className="space-y-2 text-xs">
             {[
-              { label: 'Accueil', page: 'home' as Page },
-              { label: 'Injecteurs Diesel', page: 'catalog' as Page },
-              { label: 'Pompes Haute Pression', page: 'catalog' as Page },
-              { label: 'Espace Client / Garagiste Pro', page: 'client' as Page },
-              { label: ' Back-Office Admin', page: 'admin' as Page },
-              { label: 'Contact & Atelier Agadir', page: 'contact' as Page },
+              { label: dict.nav.home, page: 'home' as Page },
+              { label: dict.nav.categories.injecteur, page: 'catalog' as Page },
+              { label: dict.nav.categories.pompe, page: 'catalog' as Page },
+              { label: dict.nav.services, page: 'services' as Page },
+              { label: dict.nav.about, page: 'about' as Page },
+              { label: dict.nav.quote, page: 'devis' as Page },
+              { label: dict.nav.contact, page: 'contact' as Page },
             ].map(l => (
               <li key={l.label}>
                 <button
                   onClick={() => navigate(l.page)}
-                  className="hover:text-blue-400 transition-colors text-left font-semibold flex items-center gap-1.5"
+                  className="hover:text-blue-400 transition-colors text-left rtl:text-right font-semibold flex items-center gap-1.5"
                 >
-                  <span className="text-blue-500 text-[10px]">▸</span>
+                  <span className="text-blue-500 text-[10px]">{isRTL ? '◂' : '▸'}</span>
                   <span>{l.label}</span>
                 </button>
               </li>
@@ -65,21 +89,13 @@ export default function Footer({ navigate }: FooterProps) {
 
         {/* Horaires */}
         <div>
-          <h4 className="text-xs tracking-widest uppercase font-bold text-white mb-4">Horaires d'Ouverture</h4>
+          <h4 className="text-xs tracking-widest uppercase font-bold text-white mb-4">{dict.contact.hoursTitle}</h4>
           <table className="w-full text-xs text-slate-400">
             <tbody className="divide-y divide-slate-900">
-              {[
-                { day: 'Lundi', h: '09h30 — 19h00' },
-                { day: 'Mardi', h: '09h30 — 19h00' },
-                { day: 'Mercredi', h: '09h30 — 19h00' },
-                { day: 'Jeudi', h: '09h30 — 19h00' },
-                { day: 'Vendredi', h: '09h30 — 19h00' },
-                { day: 'Samedi', h: '09h30 — 13h00' },
-                { day: 'Dimanche', h: 'Fermé', closed: true },
-              ].map(row => (
+              {DAYS.map(row => (
                 <tr key={row.day}>
-                  <td className="py-1.5 font-semibold text-slate-300">{row.day}</td>
-                  <td className={`py-1.5 text-right font-mono ${row.closed ? 'text-amber-400 font-bold' : ''}`}>{row.h}</td>
+                  <td className="py-1.5 font-semibold text-slate-300 text-left rtl:text-right">{row.day}</td>
+                  <td className={`py-1.5 text-right rtl:text-left font-mono ${row.closed ? 'text-amber-400 font-bold' : ''}`} dir="ltr">{row.h}</td>
                 </tr>
               ))}
             </tbody>
@@ -88,19 +104,21 @@ export default function Footer({ navigate }: FooterProps) {
 
         {/* Contact & Map */}
         <div className="space-y-3 text-xs">
-          <h4 className="text-xs tracking-widest uppercase font-bold text-white mb-4">Atelier Agadir</h4>
+          <h4 className="text-xs tracking-widest uppercase font-bold text-white mb-4">{dict.footer.contact}</h4>
           <p className="flex items-start gap-2 text-slate-300">
             <FaLocationDot className="text-blue-400 text-sm shrink-0 mt-0.5" />
-            <span>70 Bd Abdelkrim EL Khattabi, Agadir 80000, Maroc</span>
+            <span>{dict.footer.address}</span>
           </p>
           <p className="flex items-center gap-2 text-slate-300">
             <FaPhone className="text-blue-400 text-xs shrink-0" />
-            <a href="tel:+212525200665" className="font-mono font-bold text-blue-400 hover:underline">05 25 20 06 65</a>
+            <a href={`tel:${dict.common.phoneIntl}`} className="font-mono font-bold text-blue-400 hover:underline" dir="ltr">
+              {dict.common.phone}
+            </a>
           </p>
           <p className="flex items-center gap-2 text-slate-300">
             <FaStar className="text-amber-400 text-xs shrink-0" />
             <a href="https://maps.app.goo.gl/RrtYxiBw1udYLv9b6" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline font-semibold">
-              4.5 / 5★ (18 avis Google)
+              {dict.common.rating}★ ({dict.common.googleReviewsCount})
             </a>
           </p>
 
@@ -108,17 +126,16 @@ export default function Footer({ navigate }: FooterProps) {
             onClick={() => navigate('contact')}
             className="w-full py-3 mt-2 bg-blue-800 hover:bg-blue-900 text-white font-bold uppercase rounded-lg tracking-wider shadow-md text-[11px] flex items-center justify-center gap-2 transition-colors"
           >
-            <span>Nous Contacter</span>
-            <FaArrowRight className="text-[10px]" />
+            <span>{dict.nav.contact}</span>
+            {isRTL ? <FaArrowLeft className="text-[10px]" /> : <FaArrowRight className="text-[10px]" />}
           </button>
         </div>
       </div>
 
       {/* Bottom bar */}
       <div className="border-t border-slate-900 bg-slate-950 py-4">
-        <div className="max-w-[500px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-          <p>© 2026 TIFAOUT AUTO — Réparation & Pièces Injection Diesel Agadir Maroc</p>
-          <p className="font-mono text-[11px] text-slate-600"></p>
+        <div className="max-w-[700px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-center text-center text-xs text-slate-500 gap-2">
+          <p>© 2026 TIFAOUT AUTO — {dict.footer.rights}</p>
         </div>
       </div>
     </footer>

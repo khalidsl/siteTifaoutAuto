@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Pagination from '../../components/admin/Pagination';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface UsersTabProps {
   usersList: any[];
@@ -11,31 +12,31 @@ interface UsersTabProps {
 export default function UsersTab({ usersList, handleUpdateUserRole, handleUpdateUserDiscount, handleDeleteUser }: UsersTabProps) {
   const [page, setPage] = useState(1);
   const visibleUsers = usersList.slice((page - 1) * 10, page * 10);
+  const { dict } = useLanguage();
+
   return (
     <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="font-display text-2xl font-bold uppercase text-slate-900">Comptes Utilisateurs & Garagistes ({usersList.length})</h2>
-          <p className="text-xs text-slate-500 mt-1">Gérez les accès, les remises professionnelles et les points de fidélité.</p>
+          <h2 className="font-display text-2xl font-bold uppercase text-slate-900">{dict.admin.users.title} ({usersList.length})</h2>
         </div>
       </div>
 
       {usersList.length === 0 ? (
         <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
-          <p className="text-slate-500 font-semibold">Aucun utilisateur enregistré pour le moment.</p>
+          <p className="text-slate-500 font-semibold">{dict.common.error}</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left rtl:text-right">
             <thead className="bg-slate-100 text-slate-700 uppercase font-semibold text-xs border-b">
               <tr>
-                <th className="p-3">Utilisateur</th>
-                <th className="p-3">Contact</th>
-                <th className="p-3">Véhicule / Garage</th>
-                <th className="p-3">Rôle</th>
-                <th className="p-3">Remise </th>
-                {/* <th className="p-3">Points</th> */}
-                <th className="p-3 text-right">Actions</th>
+                <th className="p-3">{dict.admin.users.table.name}</th>
+                <th className="p-3">{dict.admin.users.table.contact}</th>
+                <th className="p-3">Véhicule</th>
+                <th className="p-3">{dict.admin.users.table.role}</th>
+                <th className="p-3">{dict.admin.users.table.discount}</th>
+                <th className="p-3 text-right rtl:text-left">{dict.admin.users.table.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -49,7 +50,7 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleUpdate
                     <div>✉ {u.email}</div>
                     <div className="font-mono text-slate-500">📞 {u.phone}</div>
                   </td>
-                  <td className="p-3 text-xs font-semibold text-slate-700">{u.vehicleBrand || 'Non renseigné'}</td>
+                  <td className="p-3 text-xs font-semibold text-slate-700">{u.vehicleBrand || '-'}</td>
                   <td className="p-3">
                     <select
                       value={u.role || 'client'}
@@ -58,8 +59,9 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleUpdate
                         u.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-blue-100 text-blue-800 border-blue-300'
                       }`}
                     >
-                      <option value="client">Client / Garagiste</option>
-                      <option value="admin">Administrateur</option>
+                      <option value="client">{dict.admin.users.roles.client}</option>
+                      <option value="garagiste">{dict.admin.users.roles.garagiste}</option>
+                      <option value="admin">{dict.admin.users.roles.admin}</option>
                     </select>
                   </td>
                   <td className="p-3">
@@ -80,9 +82,8 @@ export default function UsersTab({ usersList, handleUpdateUserRole, handleUpdate
                       <span className="text-xs text-slate-500 font-bold">%</span>
                     </div>
                   </td>
-                  {/* <td className="p-3 font-mono font-bold text-slate-800 text-xs">{u.loyaltyPoints || 0} pts</td> */}
-                  <td className="p-3 text-right">
-                    <button onClick={() => handleDeleteUser(u._id, u.email)} className="px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded border border-red-200 transition-colors">Supprimer</button>
+                  <td className="p-3 text-right rtl:text-left">
+                    <button onClick={() => handleDeleteUser(u._id, u.email)} className="px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-50 rounded border border-red-200 transition-colors">{dict.admin.products.actions.delete}</button>
                   </td>
                 </tr>
               ))}
