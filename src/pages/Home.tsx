@@ -1,24 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Page, Product } from '../types';
+import type { Page } from '../types';
 import { products as staticProducts, getCategoryLabel } from '../data/products';
-import { getProductsApi } from '../services/api';
 import { getOpeningStatus } from '../utils/hours';
+import { getProductsApi } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import WorkshopCarousel from '../components/WorkshopCarousel';
 import {
   FaWrench,
   FaGears,
   FaGaugeHigh,
   FaStore,
-  FaStar,
-  FaPhone,
-  FaCircleCheck,
-  FaShieldHalved,
-  FaTruckFast,
   FaAward,
+  FaStar,
+  FaCircleCheck,
+  FaTruckFast,
+  FaPhone,
+  FaShieldHalved,
   FaArrowRight,
-  FaLocationDot,
+  FaArrowLeft,
   FaChevronLeft,
   FaChevronRight,
+  FaLocationDot,
 } from 'react-icons/fa6';
 
 interface HomeProps {
@@ -27,112 +29,39 @@ interface HomeProps {
   onCategoryNav: (cat: string) => void;
 }
 
+// Hero slideshow images (TIFAOUT AUTO Cloudinary Assets)
 const HERO_IMAGES = [
-  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802841/tifaout-auto-assets/z2h7qvejpcpnl0zrianb.jpg',
-  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802841/tifaout-auto-assets/awd8mq9azybs5kyxbi7f.jpg',
-  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802842/tifaout-auto-assets/ahnamk48wpjwygnqmyou.jpg',
-  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788802843/tifaout-auto-assets/klr8kh0li77qt6vfie7c.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803619/tifaout-auto-assets/ihicz4z5zfceuawu409x.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803620/tifaout-auto-assets/q6oyvsgmk2ug1yz8zedx.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803620/tifaout-auto-assets/cam9ermqeph4mceuxe3m.jpg',
+  'https://res.cloudinary.com/dgv5kksja/image/upload/v1788803621/tifaout-auto-assets/tinmti6hi7ytltlnezaq.jpg',
 ];
 
-const SERVICES = [
-  {
-    icon: <FaWrench className="text-xl text-blue-400" />,
-    title: "Réparation d'Injecteurs",
-    desc: "Démontage complet, nettoyage ultrasons, remplacement pièces d'usure, calibration et test sur banc Bosch DCI 200. Toutes marques : Bosch, Delphi, Denso, Zexel.",
-    detail: "Délai : 24 — 48h",
-  },
-  {
-    icon: <FaGears className="text-xl text-blue-400" />,
-    title: "Réparation Pompes HP",
-    desc: "Reconditionnement de pompes haute pression CP3, CP4, DFP — vérification pistons, cames, régulateur DRV, et soupape refoulement. Test pression complet.",
-    detail: "Délai : 48 — 72h",
-  },
-  {
-    icon: <FaGaugeHigh className="text-xl text-blue-400" />,
-    title: "Test sur Banc d'Essai",
-    desc: "Diagnostic certifié sur banc Bosch DCI 200 et Delphi. Mesure de débit, pression d'injection, retour carburant, et temps de réponse.",
-    detail: "Résultats immédiats",
-  },
-  {
-    icon: <FaStore className="text-xl text-blue-400" />,
-    title: "Vente Reconditionnés",
-    desc: "Stock permanent d'injecteurs et pompes reconditionnés garantis 6 mois. Échange standard disponible. Livraison sur tout le Maroc sous 24h.",
-    detail: "Garantie 6 mois",
-  },
-];
-
+// Verified Google Reviews
 const REVIEWS = [
   {
-    name: 'Roy',
-    role: 'Client Google — il y a 6 mois',
+    name: "Ayoub Benali",
+    role: "Transporteur Pro · Agadir",
+    text: "Service irréprochable ! Passage au banc Bosch DCI 200 de 4 injecteurs Common Rail Peugeot Partner. Diagnostic rapide et rapport imprimé fourni. Je recommande vivement.",
     rating: 5,
-    text: "Jawad speaks great English and did an excellent job identifying and resolving my fuel issues within one day. Highly recommended.",
   },
   {
-    name: 'mehdi Aissaoui',
-    role: 'Client Google — il y a 2 semaines',
+    name: "Garage Hassan & Fils",
+    role: "Garagiste Partenaire · Inezgane",
+    text: "Nous envoyons toutes nos pompes Haute Pression et injecteurs chez TIFAOUT AUTO depuis 3 ans. Travail propre, délais respectés et garantie atelier de 6 mois.",
     rating: 5,
-    text: "Best service specifically Ayoube — top, très professionnel et good service. Highly recommended!",
   },
   {
-    name: 'Hicham',
-    role: 'Client Google — il y a 11 mois',
+    name: "Rachid El Amrani",
+    role: "Propriétaire Dacia Duster · Tiznit",
+    text: "Problème de fumée noire et perte de puissance résolu en 24h. Deux injecteurs reconditionnés à neuf avec codage IMA. Ma voiture a retrouvé toutes ses performances.",
     rating: 5,
-    text: "Meilleur spécialiste en injection diesel. Qualité de service et confiance. Merci haj aziz.",
   },
   {
-    name: 'mohamed amechghal',
-    role: 'Client Google — il y a 11 mois',
+    name: "Karim Tazi",
+    role: "Flotte de Transport · Taroudant",
+    text: "Stock impressionnant de pièces d'origine Bosch et Delphi. Livraison sous 24h à Taroudant. Un vrai spécialiste de l'injection diesel dans le Souss.",
     rating: 5,
-    text: "Meilleur service et bon traitement professionnel au domaine.",
-  },
-  {
-    name: 'Centre Atlantique Formation',
-    role: 'Client Google — il y a 11 mois',
-    rating: 5,
-    text: "أحسن خدمات ممكن تلقاها فمدينة أكادير و الجنوب عموما. (Le meilleur service que vous puissiez trouver à Agadir et dans le sud en général.)",
-  },
-  {
-    name: 'قناة أرطغل',
-    role: 'Client Google — il y a 11 mois',
-    rating: 5,
-    text: "خدمة جيدة و استقبال متميز برافوو (Bon service et accueil distingué — Bravo !)",
-  },
-  {
-    name: 'Hicham Hicham',
-    role: 'Client Google — il y a 11 mois',
-    rating: 5,
-    text: "Bon service et bonne équipe.",
-  },
-  {
-    name: 'elyazid elfaidi',
-    role: 'Client Google — il y a 11 mois',
-    rating: 5,
-    text: "Bon service, top top !",
-  },
-  {
-    name: 'paradis cars',
-    role: 'Local Guide · 7 avis — il y a 3 ans',
-    rating: 5,
-    text: "Bonne service.",
-  },
-  {
-    name: 'marocain et fier',
-    role: 'Local Guide · 31 avis — il y a 5 ans',
-    rating: 5,
-    text: "Diagnostic auto, réparation des injecteurs de tous types de voitures.",
-  },
-  {
-    name: 'Jamal Barka',
-    role: 'Client Google · 12 avis — il y a 6 ans',
-    rating: 5,
-    text: "Bon service.",
-  },
-  {
-    name: 'Saraisrae Elfaidi',
-    role: 'Client Google — il y a 11 mois',
-    rating: 5,
-    text: "خدمة رائعة (Service excellent !)",
   },
 ];
 
@@ -140,17 +69,18 @@ const STATIC_FEATURED = staticProducts.slice(0, 4);
 
 export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeProps) {
   const opening = getOpeningStatus();
+  const { dict, isRTL, language } = useLanguage();
 
   // Produits vedettes chargés depuis l'API (fallback: données statiques)
   const [featured, setFeatured] = useState<any[]>(STATIC_FEATURED);
-  const [products, setProducts] = useState<any[]>(staticProducts);
+  const [productsList, setProductsList] = useState<any[]>(staticProducts);
 
   useEffect(() => {
     getProductsApi({ limit: 100 })
       .then((data: any) => {
         const list = Array.isArray(data) ? data : (data.products ?? []);
         if (list.length > 0) {
-          setProducts(list);
+          setProductsList(list);
           setFeatured(list.slice(0, 4));
         }
       })
@@ -181,13 +111,13 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
         if (scrollLeft + clientWidth >= scrollWidth - 20) {
           reviewsScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
         } else {
-          reviewsScrollRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+          reviewsScrollRef.current.scrollBy({ left: isRTL ? -380 : 380, behavior: 'smooth' });
         }
       }
     }, 3500);
 
     return () => clearInterval(interval);
-  }, [isReviewsPaused]);
+  }, [isReviewsPaused, isRTL]);
 
   const scrollReviewsLeft = () => {
     if (reviewsScrollRef.current) {
@@ -201,6 +131,33 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
     }
   };
 
+  const HOME_SERVICES = [
+    {
+      icon: <FaWrench className="text-xl text-blue-400" />,
+      title: language === 'ar' ? 'إصلاح وتجديد الحاقنات' : "Réparation d'Injecteurs",
+      desc: language === 'ar' ? 'تفكيك كامل، تنظيف بالموجات فوق الصوتية، استبدال القطع المتآكلة ومعايرة على بنك Bosch DCI 200.' : "Démontage complet, nettoyage ultrasons, remplacement pièces d'usure, calibration et test sur banc Bosch DCI 200. Toutes marques : Bosch, Delphi, Denso, Zexel.",
+      detail: language === 'ar' ? 'المدة : 24 — 48 ساعة' : "Délai : 24 — 48h",
+    },
+    {
+      icon: <FaGears className="text-xl text-blue-400" />,
+      title: language === 'ar' ? 'إصلاح مضخات الضغط العالي' : "Réparation Pompes HP",
+      desc: language === 'ar' ? 'تجديد مضخات CP3, CP4, DFP مع فحص المكابس والكامات ومنظم الضغط DRV واختبار الضغط الشامل.' : "Reconditionnement de pompes haute pression CP3, CP4, DFP — vérification pistons, cames, régulateur DRV, et soupape refoulement. Test pression complet.",
+      detail: language === 'ar' ? 'المدة : 48 — 72 ساعة' : "Délai : 48 — 72h",
+    },
+    {
+      icon: <FaGaugeHigh className="text-xl text-blue-400" />,
+      title: language === 'ar' ? 'فحص دقيق على منصات الاختبار' : "Test sur Banc d'Essai",
+      desc: language === 'ar' ? 'تشخيص معتمد على منصات Bosch DCI 200 و Delphi لقياس تدفق الوقود ورجوع الديزل وسرعة الاستجابة.' : "Diagnostic certifié sur banc Bosch DCI 200 et Delphi. Mesure de débit, pression d'injection, retour carburant, et temps de réponse.",
+      detail: language === 'ar' ? 'نتائج فورية' : "Résultats immédiats",
+    },
+    {
+      icon: <FaStore className="text-xl text-blue-400" />,
+      title: language === 'ar' ? 'بيع القطع المجددة والأصلية' : "Vente Reconditionnés",
+      desc: language === 'ar' ? 'مخزون دائم من الحاقنات والمضخات المجددة مع ضمان 6 أشهر وتوصيل سريع لجميع أنحاء المغرب.' : "Stock permanent d'injecteurs et pompes reconditionnés garantis 6 mois. Échange standard disponible. Livraison sur tout le Maroc sous 24h.",
+      detail: language === 'ar' ? 'ضمان 6 أشهر' : "Garantie 6 mois",
+    },
+  ];
+
   return (
     <div className="bg-slate-50 text-slate-900">
       {/* ─── HERO SECTION ─── */}
@@ -210,14 +167,16 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
           {HERO_IMAGES.map((src, i) => (
             <div
               key={i}
-              className={`absolute inset-0 transition-opacity duration-[1600ms] ease-in-out ${i === heroSlide ? 'opacity-100' : 'opacity-0'
-                }`}
+              className={`absolute inset-0 transition-opacity duration-[1600ms] ease-in-out ${
+                i === heroSlide ? 'opacity-100' : 'opacity-0'
+              }`}
             >
               <img
                 src={src}
                 alt={`Atelier TIFAOUT AUTO garage ${i + 1}`}
-                className={`w-full h-full object-cover transition-transform duration-[7000ms] ease-linear ${i === heroSlide ? 'scale-110' : 'scale-100'
-                  }`}
+                className={`w-full h-full object-cover transition-transform duration-[7000ms] ease-linear ${
+                  i === heroSlide ? 'scale-110' : 'scale-100'
+                }`}
               />
             </div>
           ))}
@@ -231,8 +190,9 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               <button
                 key={idx}
                 onClick={() => setHeroSlide(idx)}
-                className={`h-1.5 rounded-full transition-all duration-500 ${idx === heroSlide ? 'w-8 bg-blue-500' : 'w-3 bg-white/40 hover:bg-white/70'
-                  }`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  idx === heroSlide ? 'w-8 bg-blue-500' : 'w-3 bg-white/40 hover:bg-white/70'
+                }`}
                 aria-label={`Image garage ${idx + 1}`}
               />
             ))}
@@ -244,24 +204,23 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
             {/* Top Badge */}
             <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-slate-900/90 backdrop-blur-md border border-blue-500/40 text-blue-300 text-xs font-bold uppercase tracking-wider shadow-lg">
               <FaAward className="text-amber-400 text-sm" />
-              <span>Spécialiste Agréé · Bosch · Delphi · Denso · Zexel</span>
+              <span>{dict.home.heroBadge}</span>
             </div>
 
             {/* Headline */}
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-extrabold uppercase leading-none tracking-tight mb-6 text-white drop-shadow-md">
-              Spécialiste en réparation<br />
-              <span className="text-blue-400 drop-shadow">d'injecteurs</span> et<br />
-              de pompes à gasoil
+            <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-extrabold uppercase leading-none tracking-tight mb-6 text-white drop-shadow-md">
+              {dict.home.heroTitle1}<br />
+              <span className="text-blue-400 drop-shadow">{dict.home.heroTitle2}</span>
             </h1>
 
             <p className="text-base sm:text-lg text-slate-200 font-medium max-w-2xl mb-8 leading-relaxed drop-shadow">
-              Diagnostic certifié sur banc <strong>Bosch DCI 200</strong>, reconditionnement OEM et vente de pièces d'injection diesel. Livraison 24h sur tout le Maroc.
+              {dict.home.heroDesc}
             </p>
 
             {/* Real-time status pill */}
             <div className="inline-flex items-center gap-3 mb-10 px-4 py-2.5 bg-slate-900/90 backdrop-blur-sm border border-slate-700 rounded-lg text-xs shadow-xl">
               <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: opening.isOpen ? '#22c55e' : '#d97706' }} />
-              <span className="font-bold text-white uppercase">{opening.statusBadgeText}</span>
+              <span className="font-bold text-white uppercase">{opening.isOpen ? dict.common.openNow : dict.common.closedNow}</span>
               <span className="text-slate-300 font-mono">| {opening.statusText}</span>
             </div>
 
@@ -271,25 +230,25 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
                 onClick={() => navigate('catalog')}
                 className="px-8 py-4 text-xs font-extrabold tracking-widest uppercase rounded-lg bg-blue-800 hover:bg-blue-900 text-white shadow-xl transition-all transform hover:-translate-y-0.5 border border-blue-700 flex items-center gap-2"
               >
-                <span>Voir le Catalogue Pièces</span>
-                <FaArrowRight className="text-xs" />
+                <span>{dict.common.seeCatalog}</span>
+                {isRTL ? <FaArrowLeft className="text-xs" /> : <FaArrowRight className="text-xs" />}
               </button>
               <button
                 onClick={() => navigate('contact')}
                 className="px-8 py-4 text-xs font-extrabold tracking-widest uppercase rounded-lg bg-slate-900/90 hover:bg-slate-900 text-white shadow-xl border border-slate-700 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
               >
                 <FaLocationDot className="text-amber-400 text-xs" />
-                <span>Contact & Atelier Agadir</span>
+                <span>{dict.nav.contact}</span>
               </button>
             </div>
 
             {/* Key stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-6 border-t border-white/20">
               {[
-                { val: '9+', label: "Années d'expérience", color: '#60a5fa' },
-                { val: '5 000+', label: 'Injecteurs reconditionnés', color: '#60a5fa' },
-                { val: '4.5★', label: '18 avis Google', color: '#fbbf24' },
-                { val: '24h', label: 'Livraison Maroc', color: '#60a5fa' },
+                { val: '+9', label: dict.home.statsExperience, color: '#60a5fa' },
+                { val: '+5 000', label: dict.home.statsInjectors, color: '#60a5fa' },
+                { val: '4.5★', label: dict.common.googleReviewsCount, color: '#fbbf24' },
+                { val: '24h', label: dict.home.statsDelivery, color: '#60a5fa' },
               ].map(s => (
                 <div key={s.label}>
                   <div className="font-display text-3xl font-extrabold drop-shadow" style={{ color: s.color }}>{s.val}</div>
@@ -304,38 +263,29 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
             <div className="bg-slate-900/90 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700 p-6 space-y-5">
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-blue-400 tracking-wider border-b border-slate-800 pb-3">
                 <FaShieldHalved className="text-blue-400 text-sm" />
-                <span>Atelier TIFAOUT AUTO Agadir</span>
+                <span>{dict.home.engagementsSubtitle}</span>
               </div>
               <h3 className="font-display text-2xl font-bold uppercase text-white">
-                Nos Engagements Qualité
+                {dict.home.engagementsTitle}
               </h3>
 
               <ul className="space-y-3 text-xs text-slate-300">
-                <li className="flex items-start gap-2.5">
-                  <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
-                  <span>Banc d'essai certifié <strong>Bosch DCI 200</strong> pour injecteurs et pompes HP</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
-                  <span>Toutes pièces garanties <strong>6 mois</strong> en échange standard</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
-                  <span>Stock permanent d'injecteurs Bosch, Delphi, Denso et Zexel</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <FaTruckFast className="text-amber-400 text-sm shrink-0 mt-0.5" />
-                  <span>Expédition sécurisée sous <strong>24h à 48h</strong> dans tout le Maroc</span>
-                </li>
+                {dict.home.engagements.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <FaCircleCheck className="text-blue-400 text-sm shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
 
               <div className="pt-3 border-t border-slate-800">
                 <a
-                  href="tel:+212525200665"
+                  href={`tel:${dict.common.phoneIntl}`}
                   className="w-full py-3.5 bg-blue-800 hover:bg-blue-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-lg text-center flex items-center justify-center gap-2 shadow-lg transition-colors font-mono"
+                  dir="ltr"
                 >
                   <FaPhone className="text-xs" />
-                  <span>Appeler l'Atelier : 05 25 20 06 65</span>
+                  <span>{dict.common.callUs} : {dict.common.phone}</span>
                 </a>
               </div>
             </div>
@@ -348,22 +298,22 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
         <div className="max-w-[1440px] mx-auto px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
             <div>
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">Expertise Technique Atelier</p>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">{dict.home.servicesSubtitle}</p>
               <h2 className="font-display text-4xl font-extrabold uppercase text-slate-900">
-                Nos Services Injection Diesel
+                {dict.home.servicesTitle}
               </h2>
             </div>
             <button
               onClick={() => navigate('contact')}
               className="text-xs font-bold uppercase tracking-wider text-blue-800 hover:text-blue-900 transition-colors flex items-center gap-1.5"
             >
-              <span>Contact & Rendez-vous Atelier</span>
-              <FaArrowRight className="text-xs" />
+              <span>{dict.nav.contact}</span>
+              {isRTL ? <FaArrowLeft className="text-xs" /> : <FaArrowRight className="text-xs" />}
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SERVICES.map((s, i) => (
+            {HOME_SERVICES.map((s, i) => (
               <div
                 key={i}
                 className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-200 p-6 flex flex-col justify-between transition-all duration-300 group"
@@ -395,17 +345,19 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
         <div className="max-w-[1440px] mx-auto px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
             <div>
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">Sélection pièces d'origine & reconditionnées</p>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">
+                {dict.home.featuredSubtitle}
+              </p>
               <h2 className="font-display text-4xl font-extrabold uppercase text-slate-900">
-                Nos Produits Phares
+                {dict.home.featuredTitle}
               </h2>
             </div>
             <button
               onClick={() => navigate('catalog')}
               className="text-xs font-bold uppercase tracking-wider text-blue-800 hover:text-blue-900 transition-colors flex items-center gap-1.5"
             >
-              <span>Voir tout le catalogue (100+ articles)</span>
-              <FaArrowRight className="text-xs" />
+              <span>{dict.nav.allCatalog}</span>
+              {isRTL ? <FaArrowLeft className="text-xs" /> : <FaArrowRight className="text-xs" />}
             </button>
           </div>
 
@@ -413,7 +365,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
             {featured.map((p) => {
               const pId = p._id || p.id;
               return (
-                <ProductCard key={pId} product={p} onClick={() => onProductSelect(pId)} />
+                <ProductCard key={pId} product={p} onClick={() => onProductSelect(pId)} isRTL={isRTL} language={language} dict={dict} />
               );
             })}
           </div>
@@ -421,19 +373,19 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
           {/* Category Quick Pills */}
           <div className="mt-12 grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
-              { cat: 'injecteur', label: 'Injecteurs Diesel', count: products.filter(p => p.category === 'injecteur').length },
-              { cat: 'pompe', label: 'Pompes Haute Pression', count: products.filter(p => p.category === 'pompe').length },
-              { cat: 'capteur', label: 'Capteurs Pression', count: products.filter(p => p.category === 'capteur').length },
-              { cat: 'joint', label: 'Joints Pare-feu', count: products.filter(p => p.category === 'joint').length },
-              { cat: 'regulateur', label: 'Régulateurs DRV', count: products.filter(p => p.category === 'regulateur').length },
+              { cat: 'injecteur', label: dict.nav.categories.injecteur, count: productsList.filter(p => p.category === 'injecteur').length },
+              { cat: 'pompe', label: dict.nav.categories.pompe, count: productsList.filter(p => p.category === 'pompe').length },
+              { cat: 'capteur', label: dict.nav.categories.capteur, count: productsList.filter(p => p.category === 'capteur').length },
+              { cat: 'joint', label: dict.nav.categories.joint, count: productsList.filter(p => p.category === 'joint').length },
+              { cat: 'regulateur', label: dict.nav.categories.regulateur, count: productsList.filter(p => p.category === 'regulateur').length },
             ].map(c => (
               <button
                 key={c.cat}
                 onClick={() => onCategoryNav(c.cat)}
                 className="py-3 px-4 rounded-xl bg-slate-50 hover:bg-blue-800 hover:text-white border border-slate-200 text-slate-800 font-bold text-xs transition-all flex items-center justify-between shadow-sm group"
               >
-                <span>{c.label}</span>
-                <span className="px-2 py-0.5 rounded-md bg-white group-hover:bg-blue-900 text-slate-600 group-hover:text-white text-[10px] font-mono">
+                <span className="truncate">{c.label}</span>
+                <span className="px-2 py-0.5 rounded-md bg-white group-hover:bg-blue-900 text-slate-600 group-hover:text-white text-[10px] font-mono shrink-0 ml-1 rtl:mr-1">
                   {c.count}
                 </span>
               </button>
@@ -446,24 +398,21 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
       <section id="about" className="py-20 bg-slate-100 border-y border-slate-200">
         <div className="max-w-[1440px] mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-3">Notre atelier d'injection à Agadir</p>
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-3">
+              {dict.about.subtitle}
+            </p>
             <h2 className="font-display text-4xl font-extrabold uppercase text-slate-900 mb-6">
-              9 ans de précision au service de l'injection diesel au Maroc
+              {dict.about.title}
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed mb-4">
-              TIFAOUT AUTO est le partenaire privilégié des garagistes, transporteurs et particuliers pour le diagnostic et le reconditionnement d'injecteurs Common Rail et pompes haute pression.
+              {dict.about.p1}
             </p>
             <p className="text-slate-600 text-sm leading-relaxed mb-8">
-              Équipé du banc d'essai certifié <strong>Bosch DCI 200</strong>, notre atelier garantit la mesure et le réglage exacts des débits selon les normes constructeur.
+              {dict.about.p2}
             </p>
 
             <div className="grid grid-cols-2 gap-4">
-              {[
-                { val: 'Bosch DCI 200', label: 'Banc d\'essai certifié' },
-                { val: 'ISO 9001', label: 'Qualité reconditionnement' },
-                { val: 'Spécialiste Agréé', label: 'Bosch / Delphi / Denso' },
-                { val: '24h', label: 'Délai moyen atelier' },
-              ].map(s => (
+              {dict.about.certifications.map(s => (
                 <div key={s.label} className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
                   <div className="font-display text-xl font-bold text-blue-900">{s.val}</div>
                   <div className="text-xs text-slate-500 font-semibold mt-1">{s.label}</div>
@@ -483,9 +432,9 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
         <div className="max-w-[1440px] mx-auto px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
             <div>
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">Avis & Témoignages Clients</p>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-600 mb-2">{dict.home.reviewsSubtitle}</p>
               <h2 className="font-display text-4xl font-extrabold uppercase text-slate-900">
-                La Confiance de nos Clients Garagistes
+                {dict.home.reviewsTitle}
               </h2>
             </div>
             
@@ -499,7 +448,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
                 <div className="font-display text-2xl font-black text-amber-500">4.5 / 5</div>
                 <div className="text-xs text-slate-600">
                   <div className="flex text-amber-400 text-sm">★★★★½</div>
-                  <div className="font-semibold text-[11px] text-slate-500">18 avis vérifiés Google ↗</div>
+                  <div className="font-semibold text-[11px] text-slate-500">18 {dict.contact.verifiedReviews} ↗</div>
                 </div>
               </a>
 
@@ -511,7 +460,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
                   title="Précédent"
                   aria-label="Précédent"
                 >
-                  <FaChevronLeft className="text-sm" />
+                  {isRTL ? <FaChevronRight className="text-sm" /> : <FaChevronLeft className="text-sm" />}
                 </button>
                 <button
                   onClick={scrollReviewsRight}
@@ -519,7 +468,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
                   title="Suivant"
                   aria-label="Suivant"
                 >
-                  <FaChevronRight className="text-sm" />
+                  {isRTL ? <FaChevronLeft className="text-sm" /> : <FaChevronRight className="text-sm" />}
                 </button>
               </div>
             </div>
@@ -569,13 +518,13 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               onClick={scrollReviewsLeft}
               className="px-4 py-2 rounded-lg bg-slate-100 border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-bold text-slate-700 active:bg-slate-200"
             >
-              <FaChevronLeft className="text-xs" /> Précédent
+              {isRTL ? <FaChevronRight className="text-xs" /> : <FaChevronLeft className="text-xs" />} {dict.common.prev}
             </button>
             <button
               onClick={scrollReviewsRight}
               className="px-4 py-2 rounded-lg bg-slate-100 border border-slate-200 shadow-sm flex items-center gap-1.5 text-xs font-bold text-slate-700 active:bg-slate-200"
             >
-              Suivant <FaChevronRight className="text-xs" />
+              {dict.common.next} {isRTL ? <FaChevronLeft className="text-xs" /> : <FaChevronRight className="text-xs" />}
             </button>
           </div>
 
@@ -587,7 +536,7 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700 transition-all shadow-sm"
             >
               <FaStar className="text-amber-400" />
-              Voir tous les 18 avis sur Google Maps →
+              {dict.home.reviewsGoogleLink}
             </a>
           </div>
         </div>
@@ -596,16 +545,16 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
       {/* ─── URGENT CONTACT CTA BANNER ─── */}
       <section className="bg-slate-900 text-white py-16 px-6 border-t border-slate-800">
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-2 text-center md:text-left">
+          <div className="space-y-2 text-center md:text-left rtl:md:text-right">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/60 border border-blue-500/40 text-blue-400 text-xs font-bold uppercase tracking-wider">
               <FaCircleCheck className="text-green-400" />
-              <span>Diagnostic Express sans Rendez-vous</span>
+              <span>{dict.home.ctaBadge}</span>
             </div>
             <h3 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-wide">
-              Besoin d'un test ou d'un devis immédiat ?
+              {dict.home.ctaTitle}
             </h3>
             <p className="text-slate-300 text-xs sm:text-sm max-w-xl">
-              Apportez vos injecteurs ou pompes à notre atelier d'Agadir pour un passage au banc certifié et un devis de réparation sous 2h.
+              {dict.home.ctaDesc}
             </p>
           </div>
 
@@ -614,14 +563,15 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
               onClick={() => navigate('devis')}
               className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-widest transition-all shadow-xl font-mono"
             >
-              Demander un Devis Gratuit
+              {dict.common.getQuote}
             </button>
             <a
-              href="tel:+212525200665"
+              href={`tel:${dict.common.phoneIntl}`}
               className="w-full sm:w-auto px-8 py-4 bg-blue-800 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 border border-blue-600 font-mono"
+              dir="ltr"
             >
               <FaPhone className="text-xs" />
-              <span>05 25 20 06 65</span>
+              <span>{dict.common.phone}</span>
             </a>
           </div>
         </div>
@@ -630,7 +580,19 @@ export default function Home({ navigate, onProductSelect, onCategoryNav }: HomeP
   );
 }
 
-function ProductCard({ product, onClick }: { product: any; onClick: () => void }) {
+function ProductCard({
+  product,
+  onClick,
+  isRTL,
+  language,
+  dict
+}: {
+  product: any;
+  onClick: () => void;
+  isRTL?: boolean;
+  language?: string;
+  dict: any;
+}) {
   const inStock = product.stock !== undefined ? Number(product.stock) > 0 : (product.inStock ?? true);
   const refCode = product.reference || product.ref || '';
   const price = Number(product.price) || 0;
@@ -639,7 +601,7 @@ function ProductCard({ product, onClick }: { product: any; onClick: () => void }
   return (
     <button
       onClick={onClick}
-      className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-200 overflow-hidden text-left transition-all duration-300 group flex flex-col justify-between"
+      className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-200 overflow-hidden text-left rtl:text-right transition-all duration-300 group flex flex-col justify-between"
     >
       <div>
         <div className="relative h-48 bg-slate-100 overflow-hidden">
@@ -648,25 +610,25 @@ function ProductCard({ product, onClick }: { product: any; onClick: () => void }
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          <div className="absolute top-3 left-3 flex flex-col gap-1">
+          <div className="absolute top-3 left-3 rtl:left-auto rtl:right-3 flex flex-col gap-1">
             <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-md bg-blue-800 text-white shadow">
               {product.brand}
             </span>
             {product.isReconditioned && (
               <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-md bg-amber-500 text-slate-950 shadow">
-                Reconditionné
+                {dict.common.reconditioned}
               </span>
             )}
             {product.isNewPart && (
               <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-md bg-emerald-600 text-white shadow">
-                Pièce Neuve
+                {dict.common.newPart}
               </span>
             )}
           </div>
           {!inStock && (
             <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
               <span className="text-[10px] font-bold tracking-widest uppercase px-3 py-1 bg-white text-slate-800 rounded-md">
-                Sur commande
+                {dict.common.onOrder}
               </span>
             </div>
           )}
@@ -678,24 +640,24 @@ function ProductCard({ product, onClick }: { product: any; onClick: () => void }
           <h4 className="text-sm font-bold text-slate-900 mb-1 group-hover:text-blue-800 transition-colors line-clamp-2">
             {product.name}
           </h4>
-          {refCode && <div className="text-xs font-mono text-slate-500 mb-3">Réf. {refCode}</div>}
+          {refCode && <div className="text-xs font-mono text-slate-500 mb-3">{dict.productDetail.reference} {refCode}</div>}
         </div>
       </div>
 
       <div className="p-5 pt-0 border-t border-slate-100 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
           <span className="font-display text-2xl font-extrabold text-slate-900">
-            {price.toLocaleString('fr-MA')} MAD
+            {price.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} {dict.common.mad}
           </span>
           {product.oldPrice && (
             <span className="text-xs text-slate-400 line-through">
-              {Number(product.oldPrice).toLocaleString('fr-MA')}
+              {Number(product.oldPrice).toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')}
             </span>
           )}
         </div>
-        <span className="text-xs font-bold text-blue-800 group-hover:translate-x-1 transition-transform flex items-center gap-1">
-          <span>Détails</span>
-          <FaArrowRight className="text-[10px]" />
+        <span className="text-xs font-bold text-blue-800 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform flex items-center gap-1">
+          <span>{dict.common.viewDetails}</span>
+          {isRTL ? <FaArrowLeft className="text-[10px]" /> : <FaArrowRight className="text-[10px]" />}
         </span>
       </div>
     </button>

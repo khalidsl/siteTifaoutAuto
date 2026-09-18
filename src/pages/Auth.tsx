@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import type { Page } from '../types';
 import { googleLoginApi, loginApi, registerApi } from '../services/api';
 import { useAuth, saveSession } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   FaUserCheck,
   FaSpinner,
   FaCircleCheck,
   FaShieldHalved,
-  FaStar,
   FaPercent,
   FaClockRotateLeft,
   FaEye,
@@ -34,6 +34,7 @@ declare global {
 
 export default function Auth({ navigate }: AuthProps) {
   const { login } = useAuth();
+  const { dict } = useLanguage();
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,7 +70,7 @@ export default function Auth({ navigate }: AuthProps) {
             login(user);
             navigate(user.role === 'admin' ? 'admin' : 'client');
           } catch (err: any) {
-            setError(err.message || 'Connexion Google impossible.');
+            setError(err.message || dict.common.error);
           } finally {
             setIsLoading(false);
           }
@@ -95,7 +96,7 @@ export default function Auth({ navigate }: AuthProps) {
     script.onload = renderGoogleButton;
     document.head.appendChild(script);
     return () => window.google?.accounts.id.cancel();
-  }, [login, navigate]);
+  }, [login, navigate, dict.common.error]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +112,7 @@ export default function Auth({ navigate }: AuthProps) {
         navigate('client');
       }
     } catch (err: any) {
-      setError(err.message || 'Identifiant ou mot de passe incorrect.');
+      setError(err.message || dict.common.error);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +146,6 @@ export default function Auth({ navigate }: AuthProps) {
         password: regData.password,
       });
 
-      // Connexion automatique et redirection immédiate vers l'espace client
       saveSession(newUser);
       login(newUser);
       if (newUser.role === 'admin') {
@@ -154,12 +154,8 @@ export default function Auth({ navigate }: AuthProps) {
         navigate('client');
       }
     } catch (err: any) {
-      const msg = err.message || "Erreur lors de l'inscription.";
-      if (msg.toLowerCase().includes('email') || msg.toLowerCase().includes('utilis')) {
-        setError("Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.");
-      } else {
-        setError(msg);
-      }
+      const msg = err.message || dict.common.error;
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -173,13 +169,13 @@ export default function Auth({ navigate }: AuthProps) {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow shrink-0">
               <FaUserCheck className="text-white text-lg" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Espace Fidélité & Garagistes</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">{dict.auth.badge}</p>
               <h1 className="font-display text-2xl font-bold uppercase text-slate-900 leading-none">
-                Connexion / Inscription
+                {dict.auth.title}
               </h1>
             </div>
           </div>
@@ -187,14 +183,14 @@ export default function Auth({ navigate }: AuthProps) {
           {/* Guest Notice */}
           <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-4">
             <div>
-              <strong className="block text-amber-950 font-bold">Rappel Important :</strong>
-              <span>Vous n'avez pas besoin de compte pour commander des pièces !</span>
+              <strong className="block text-amber-950 font-bold">{dict.auth.guestNoticeTitle}</strong>
+              <span>{dict.auth.guestNoticeDesc}</span>
             </div>
             <button
               onClick={() => navigate('catalog')}
               className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase rounded-lg shrink-0 shadow transition-colors"
             >
-              Commander Invité →
+              {dict.auth.orderGuestBtn}
             </button>
           </div>
 
@@ -204,27 +200,27 @@ export default function Auth({ navigate }: AuthProps) {
               onClick={() => { setTab('login'); setError(''); }}
               className={`flex-1 py-2.5 text-xs font-bold rounded-md transition-all ${tab === 'login' ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Se Connecter
+              {dict.auth.tabLogin}
             </button>
             <button
               onClick={() => { setTab('register'); setError(''); setSuccessMsg(''); }}
               className={`flex-1 py-2.5 text-xs font-bold rounded-md transition-all ${tab === 'register' ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              Créer un Compte 
+              {dict.auth.tabRegister}
             </button>
           </div>
 
           {/* Success message */}
           {successMsg && (
             <div className="mb-4 px-4 py-3 bg-green-50 border border-green-300 rounded-lg text-xs text-green-800 font-semibold flex items-center gap-2">
-               {successMsg}
+              {successMsg}
             </div>
           )}
 
           {/* Error message */}
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 font-semibold">
-               {error}
+              {error}
             </div>
           )}
 
@@ -232,7 +228,7 @@ export default function Auth({ navigate }: AuthProps) {
           {tab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Email ou Numéro de téléphone</label>
+                <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.emailOrPhone}</label>
                 <input
                   type="text"
                   required
@@ -240,10 +236,11 @@ export default function Auth({ navigate }: AuthProps) {
                   value={loginData.identifier}
                   onChange={e => setLoginData(p => ({ ...p, identifier: e.target.value }))}
                   className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                  dir="ltr"
                 /> 
               </div>
               <div>
-                <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Mot de passe</label>
+                <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.password}</label>
                 <div className="relative">
                   <input
                     type={showLoginPassword ? 'text' : 'password'}
@@ -252,6 +249,7 @@ export default function Auth({ navigate }: AuthProps) {
                     value={loginData.password}
                     onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
                     className="w-full pl-3 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                    dir="ltr"
                   />
                   <button
                     type="button"
@@ -268,7 +266,7 @@ export default function Auth({ navigate }: AuthProps) {
                 disabled={isLoading}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow transition-all flex items-center justify-center gap-2"
               >
-                {isLoading ? <><FaSpinner className="animate-spin" /> Connexion...</> : 'Connexion à mon Espace →'}
+                {isLoading ? <><FaSpinner className="animate-spin" /> {dict.auth.loggingIn}</> : dict.auth.loginBtn}
               </button>
             </form>
           )}
@@ -278,94 +276,54 @@ export default function Auth({ navigate }: AuthProps) {
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Prénom</label>
-                  <input required type="text" placeholder="Votre prénom" value={regData.firstName} onChange={e => setRegData(p => ({ ...p, firstName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.firstName}</label>
+                  <input required type="text" value={regData.firstName} onChange={e => setRegData(p => ({ ...p, firstName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Nom</label>
-                  <input required type="text" placeholder="Votre nom" value={regData.lastName} onChange={e => setRegData(p => ({ ...p, lastName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.lastName}</label>
+                  <input required type="text" value={regData.lastName} onChange={e => setRegData(p => ({ ...p, lastName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Email professionnel</label>
-                <input required type="email" placeholder="vous@gmail.com" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
+                <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.email}</label>
+                <input required type="email" placeholder="vous@gmail.com" value={regData.email} onChange={e => setRegData(p => ({ ...p, email: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" dir="ltr" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Téléphone</label>
-                  <input required type="tel" placeholder="0600000000" value={regData.phone} onChange={e => setRegData(p => ({ ...p, phone: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white font-mono" />
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.phone}</label>
+                  <input required type="tel" placeholder="0600000000" value={regData.phone} onChange={e => setRegData(p => ({ ...p, phone: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white font-mono" dir="ltr" />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Marque Véhicule <span className="text-slate-400 normal-case">(optionnel)</span></label>
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.vehicleBrand} <span className="text-slate-400 normal-case">{dict.auth.optional}</span></label>
                   <input type="text" placeholder="Peugeot, Renault..." value={regData.vehicleBrand} onChange={e => setRegData(p => ({ ...p, vehicleBrand: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
                 </div>
               </div>
-                            {/* <div className="mb-4">
-                <label className="block text-xs uppercase font-semibold text-slate-600 mb-2">Type de compte</label>
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="accountType" value="personnel" checked={regData.accountType === 'personnel'} onChange={() => setRegData(p => ({ ...p }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
-                    <span className="text-sm text-slate-700 font-medium">Personnel</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="accountType" value="societe" checked={regData.accountType === 'societe'} onChange={() => setRegData(p => ({ ...p, accountType: 'societe' }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
-                    <span className="text-sm text-slate-700 font-medium">Société (Pro)</span>
-                  </label>
-                </div>
-              </div>
-              
-              {regData.accountType === 'societe' && (
-                <div className="mb-4">
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Nom de la société</label>
-                  <input required type="text" placeholder="Raison sociale" value={regData.companyName} onChange={e => setRegData(p => ({ ...p, companyName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
-                </div>
-              )}
-
-                            <div className="mb-4">
-                <label className="block text-xs uppercase font-semibold text-slate-600 mb-2">Type de compte</label>
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="accountType" value="personnel" checked={regData.accountType === 'personnel'} onChange={() => setRegData(p => ({ ...p }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
-                    <span className="text-sm text-slate-700 font-medium">Personnel</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="accountType" value="societe" checked={regData.accountType === 'societe'} onChange={() => setRegData(p => ({ ...p, accountType: 'societe' }))} className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
-                    <span className="text-sm text-slate-700 font-medium">Société (Pro)</span>
-                  </label>
-                </div>
-              </div>
-              
-              {regData.accountType === 'societe' && (
-                <div className="mb-4">
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Nom de la société</label>
-                  <input required type="text" placeholder="Raison sociale" value={regData.companyName} onChange={e => setRegData(p => ({ ...p, companyName: e.target.value }))} className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white" />
-                </div>
-              )} */}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Mot de passe</label>
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.password}</label>
                   <div className="relative">
                     <input
                       required
                       type={showRegPassword ? 'text' : 'password'}
-                      placeholder="Min. 6 caractères"
+                      placeholder="Min. 6 car."
                       value={regData.password}
                       onChange={e => setRegData(p => ({ ...p, password: e.target.value }))}
                       className="w-full pl-3 pr-9 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
+                      dir="ltr"
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegPassword(v => !v)}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
-                      title={showRegPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      title={showRegPassword ? 'Masquer' : 'Afficher'}
                     >
                       {showRegPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">Confirmer</label>
+                  <label className="block text-xs uppercase font-semibold text-slate-600 mb-1.5">{dict.auth.confirmPassword}</label>
                   <div className="relative">
                     <input
                       required
@@ -374,12 +332,13 @@ export default function Auth({ navigate }: AuthProps) {
                       value={regData.confirm}
                       onChange={e => setRegData(p => ({ ...p, confirm: e.target.value }))}
                       className="w-full pl-3 pr-9 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:bg-white"
+                      dir="ltr"
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegConfirm(v => !v)}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
-                      title={showRegConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      title={showRegConfirm ? 'Masquer' : 'Afficher'}
                     >
                       {showRegConfirm ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
                     </button>
@@ -392,17 +351,17 @@ export default function Auth({ navigate }: AuthProps) {
                 disabled={isLoading}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow transition-all flex items-center justify-center gap-2"
               >
-                {isLoading ? <><FaSpinner className="animate-spin" /> Inscription...</> : 'Créer mon Compte '}
+                {isLoading ? <><FaSpinner className="animate-spin" /> {dict.auth.registering}</> : dict.auth.registerBtn}
               </button>
             </form>
           )}
 
-          {/* ── Séparateur + Connexion Google (déplacé sous les formulaires) ── */}
+          {/* ── Séparateur + Connexion Google ── */}
           {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
             <>
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-[10px] font-bold uppercase text-slate-400">Ou</span>
+                <span className="text-[10px] font-bold uppercase text-slate-400">{dict.auth.orDivider}</span>
                 <div className="flex-1 h-px bg-slate-200" />
               </div>
               <div className="flex justify-center" ref={googleButtonRef} />
@@ -414,29 +373,24 @@ export default function Auth({ navigate }: AuthProps) {
         <div className="space-y-5">
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-7">
             <h3 className="font-display text-xl font-bold uppercase text-slate-900 mb-5 flex items-center gap-2">
-              <FaShieldHalved className="text-blue-600" /> Avantages du Compte Client
+              <FaShieldHalved className="text-blue-600" /> {dict.auth.benefitsTitle}
             </h3>
             <div className="space-y-4">
               {[
                 {
                   icon: <FaClockRotateLeft className="text-blue-500" />,
-                  title: 'Suivi des Commandes en Temps Réel',
-                  desc: 'Consultez le statut de chaque commande passée depuis votre espace personnel.',
+                  title: dict.auth.b1Title,
+                  desc: dict.auth.b1Desc,
                 },
                 {
                   icon: <FaPercent className="text-amber-500" />,
-                  title: 'Remise Garagiste  (%)',
-                  desc: 'Tarifs préférentiels automatiques sur l\'ensemble du catalogue pièces.',
+                  title: dict.auth.b2Title,
+                  desc: dict.auth.b2Desc,
                 },
-                // {
-                //   icon: <FaStar className="text-amber-500" />,
-                //   title: 'Points de Fidélité',
-                //   desc: 'Cumulez des points à chaque commande et bénéficiez de remises supplémentaires.',
-                // },
                 {
                   icon: <FaCircleCheck className="text-green-500" />,
-                  title: 'Historique & Factures',
-                  desc: 'Toutes vos commandes regroupées et consultables à tout moment.',
+                  title: dict.auth.b3Title,
+                  desc: dict.auth.b3Desc,
                 },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -449,12 +403,6 @@ export default function Auth({ navigate }: AuthProps) {
               ))}
             </div>
           </div>
-
-          {/* Admin info hint
-          <div className="bg-slate-800 rounded-2xl border border-slate-700 p-5 text-white text-xs">
-            <p className="font-mono text-slate-400 mb-1">Accès administrateur</p>
-            <p className="font-semibold text-slate-200">Connectez-vous avec le compte admin pour accéder au Back-Office de gestion des produits et commandes.</p>
-          </div> */}
         </div>
       </div>
     </div>

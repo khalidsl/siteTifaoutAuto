@@ -3,23 +3,12 @@ import type { Category, Brand } from '../types';
 import { getCategoryLabel } from '../data/products';
 import { getProductsApi } from '../services/api';
 import { resolveMediaUrl } from '../utils/media';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CatalogProps {
   onProductSelect: (id: string) => void;
   initialCategory?: string;
 }
-
-// All categories including new ones from catalogue
-const CATEGORIES: { val: Category | 'all'; label: string }[] = [
-  { val: 'all', label: 'Tous les produits' },
-  { val: 'injecteur', label: 'Injecteurs Diesel' },
-  { val: 'pompe', label: 'Pompes HP' },
-  { val: 'capteur', label: 'Capteurs Pression' },
-  { val: 'joint', label: 'Joints / Pochettes' },
-  { val: 'regulateur', label: 'Régulateurs' },
-  { val: 'valve', label: "Valves d'Injecteur" },
-  { val: 'durite', label: 'Durites Carburant' },
-];
 
 const BRANDS: Brand[] = ['Bosch', 'Delphi', 'Denso', 'Zexel', 'Siemens', 'ROLLANT', 'Multimarque'];
 
@@ -46,6 +35,7 @@ interface ApiProduct {
 }
 
 export default function Catalog({ onProductSelect, initialCategory }: CatalogProps) {
+  const { dict, language } = useLanguage();
   const [category, setCategory] = useState<Category | 'all'>((initialCategory as Category) || 'all');
   const [selectedBrands, setSelectedBrands] = useState<Brand[]>([]);
   const [onlyInStock, setOnlyInStock] = useState(false);
@@ -57,6 +47,17 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState('');
 
+  const CATEGORIES: { val: Category | 'all'; label: string }[] = [
+    { val: 'all', label: dict.catalog.allCategories },
+    { val: 'injecteur', label: dict.nav.categories.injecteur },
+    { val: 'pompe', label: dict.nav.categories.pompe },
+    { val: 'capteur', label: dict.nav.categories.capteur },
+    { val: 'joint', label: dict.nav.categories.joint },
+    { val: 'regulateur', label: dict.nav.categories.regulateur },
+    { val: 'valve', label: dict.nav.categories.valve },
+    { val: 'durite', label: dict.nav.categories.durite },
+  ];
+
   // Load products from API on mount
   useEffect(() => {
     let cancelled = false;
@@ -66,13 +67,12 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
       try {
         const data = await getProductsApi({ limit: 200 });
         if (!cancelled) {
-          // API returns { products, total } or plain array
           const list: ApiProduct[] = Array.isArray(data) ? data : (data.products ?? []);
           setAllProducts(list);
         }
       } catch (err: any) {
         if (!cancelled) {
-          setApiError(err.message || 'Impossible de charger le catalogue.');
+          setApiError(err.message || dict.common.error);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -108,7 +108,6 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
       return terms.every(term => searchableText.includes(term));
     });
 
-  // Products without a price are pushed to the end regardless of sort direction
   if (sort === 'price-asc') {
     filtered = [...filtered].sort((a, b) => {
       if (a.price == null && b.price == null) return 0;
@@ -127,7 +126,6 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
   }
   if (sort === 'name') filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
-  // Category count from loaded products
   const countFor = (cat: string) =>
     cat === 'all' ? allProducts.length : allProducts.filter(p => p.category === cat).length;
 
@@ -136,10 +134,15 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
       {/* Page header */}
       <div className="bg-slate-800 border-b border-slate-700 text-white py-8 px-6 shadow-inner">
         <div className="max-w-[1440px] mx-auto">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-400 mb-1">Catalogue complet pièces injection</p>
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-blue-400 mb-1">
+            {dict.catalog.headerBadge}
+          </p>
           <h1 className="font-display text-4xl font-bold uppercase tracking-wide">
-            Injecteurs &amp; Pompes Diesel
+            {dict.catalog.headerTitle}
           </h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-2 max-w-2xl">
+            {dict.catalog.headerDesc}
+          </p>
         </div>
       </div>
 
@@ -148,7 +151,9 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
         <aside className="hidden lg:flex flex-col gap-6 w-64 shrink-0 bg-white rounded-xl shadow-md border border-slate-200 p-6 self-start h-full overflow-y-auto">
           {/* Category */}
           <div>
-            <h3 className="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">Catégorie</h3>
+            <h3 className="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">
+              {dict.catalog.categoryFilterTitle}
+            </h3>
             <div className="flex flex-col gap-1">
               {CATEGORIES.map(c => (
                 <button
@@ -171,7 +176,9 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
 
           {/* Brand */}
           <div className="border-t border-slate-200 pt-4">
-            <h3 className="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">Marque</h3>
+            <h3 className="text-xs uppercase font-bold text-slate-500 mb-3 tracking-wider">
+              {dict.catalog.brandFilterTitle}
+            </h3>
             <div className="flex flex-col gap-2">
               {BRANDS.map(b => (
                 <label key={b} className="flex items-center gap-3 cursor-pointer group">
@@ -199,7 +206,7 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
                 className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
               />
               <span className="text-xs font-semibold text-slate-700">
-                En stock uniquement
+                {dict.catalog.onlyInStock}
               </span>
             </label>
           </div>
@@ -212,21 +219,20 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Rechercher par nom, référence, marque ou véhicule (ex: Bosch 0445 Peugeot)..."
+                placeholder={dict.catalog.searchPlaceholder}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full pl-4 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded focus:bg-white focus:border-blue-600 outline-none transition-all"
               />
-
             </div>
             <select
               value={sort}
               onChange={e => setSort(e.target.value as typeof sort)}
               className="px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded outline-none cursor-pointer font-semibold"
             >
-              <option value="name">Trier : Nom A→Z</option>
-              <option value="price-asc">Prix croissant</option>
-              <option value="price-desc">Prix décroissant</option>
+              <option value="name">{dict.catalog.sortName}</option>
+              <option value="price-asc">{dict.catalog.sortPriceAsc}</option>
+              <option value="price-desc">{dict.catalog.sortPriceDesc}</option>
             </select>
           </div>
 
@@ -235,7 +241,7 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
             <div className="py-20 text-center bg-white rounded-xl border border-slate-200 shadow-sm">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm text-slate-500 font-semibold">Chargement du catalogue...</p>
+                <p className="text-sm text-slate-500 font-semibold">{dict.catalog.loadingCatalog}</p>
               </div>
             </div>
           )}
@@ -244,14 +250,13 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
           {!loading && apiError && (
             <div className="py-10 text-center bg-red-50 rounded-xl border border-red-200 shadow-sm">
               <p className="text-sm text-red-600 font-semibold">⚠ {apiError}</p>
-              <p className="text-xs text-red-400 mt-1">Vérifiez que le serveur backend est démarré sur le port 5000.</p>
             </div>
           )}
 
           {/* Count */}
           {!loading && !apiError && (
             <p className="text-xs text-slate-500 mb-4 font-semibold">
-              {filtered.length} produit{filtered.length !== 1 ? 's' : ''} trouvé{filtered.length !== 1 ? 's' : ''}
+              {filtered.length} {dict.catalog.productsFound}
             </p>
           )}
 
@@ -259,12 +264,12 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
           {!loading && !apiError && (
             filtered.length === 0 ? (
               <div className="py-20 text-center bg-white rounded-xl border border-slate-200 shadow-sm">
-                <p className="text-lg font-display text-slate-500">Aucun produit ne correspond à votre recherche.</p>
+                <p className="text-lg font-display text-slate-500">{dict.catalog.noProducts}</p>
                 <button
                   className="mt-4 text-xs font-bold text-blue-600 uppercase tracking-wider"
                   onClick={() => { setSearch(''); setCategory('all'); setSelectedBrands([]); }}
                 >
-                  Réinitialiser les filtres
+                  {dict.catalog.resetFilters}
                 </button>
               </div>
             ) : (
@@ -307,19 +312,19 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
                             )}
                             {p.isReconditioned && (
                               <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-amber-500 text-slate-950">
-                                Reconditionné
+                                {dict.common.reconditioned}
                               </span>
                             )}
                             {p.isNewPart && !p.isReconditioned && (
                               <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-green-600 text-white">
-                                Neuf
+                                {dict.common.newPart}
                               </span>
                             )}
                           </div>
                           {!inStock && (
                             <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
                               <span className="text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 bg-red-600 text-white rounded shadow">
-                                {p.remarque || 'Rupture de stock'}
+                                {p.remarque || dict.common.outOfStock}
                               </span>
                             </div>
                           )}
@@ -345,19 +350,21 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
                       <div className="p-4 pt-0 border-t border-slate-100 flex items-center justify-between">
                         <div className="flex items-baseline gap-2">
                           <span className="font-display text-xl font-extrabold text-slate-900">
-                            {p.price != null ? `${p.price.toLocaleString('fr-MA')} MAD` : 'Prix sur demande'}
+                            {p.price != null ? `${p.price.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} ${dict.common.mad}` : dict.common.priceOnRequest}
                           </span>
                           {p.oldPrice != null && (
                             <span className="text-xs text-slate-400 line-through">
-                              {p.oldPrice.toLocaleString('fr-MA')}
+                              {p.oldPrice.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')}
                             </span>
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           {inStock && (
-                            <span className="text-[9px] font-bold text-green-600 uppercase">En stock ({p.stock})</span>
+                            <span className="text-[9px] font-bold text-green-600 uppercase">
+                              {dict.common.inStock} ({p.stock})
+                            </span>
                           )}
-                          <span className="text-xs font-bold text-blue-600">Détails →</span>
+                          <span className="text-xs font-bold text-blue-600">{dict.common.viewDetails}</span>
                         </div>
                       </div>
                     </button>
@@ -371,4 +378,3 @@ export default function Catalog({ onProductSelect, initialCategory }: CatalogPro
     </div>
   );
 }
-  

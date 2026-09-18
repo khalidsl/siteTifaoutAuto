@@ -16,6 +16,7 @@ import {
 } from '../services/api';
 import { useAuth, getSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 import { ORDER_STATUSES, type OrderStatus } from '../utils/orderStatus';
 import OrdersTab from './admin/OrdersTab';
 import QuotesTab from './admin/QuotesTab';
@@ -32,6 +33,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
   const { user, logout } = useAuth();
   const activeUser = user || getSession();
   const { notify } = useToast();
+  const { dict } = useLanguage();
   const [tab, setTab] = useState<'products' | 'orders' | 'quotes' | 'users'>('products');
   const [productList, setProductList] = useState<Product[]>([]);
   const [orderList, setOrderList] = useState<Order[]>([]);
@@ -425,8 +427,8 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
     }
   };
 
-  const updateRepairStatus = (id: string, status: RepairTicket['status'], progressPercentage: number) => {
-    setRepairList(prev => prev.map(r => r.id === id ? { ...r, status, progressPercentage } : r));
+  const handleUpdateRepairStatus = (id: string, status: any) => {
+    setRepairList(prev => prev.map(t => t.id === id ? { ...t, status } : t));
     notify('Statut atelier mis à jour.', 'success');
   };
 
@@ -435,7 +437,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       {confirmDialog && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">Confirmation</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">{dict.admin.confirmTitle}</h3>
             <p className="mt-3 text-sm leading-6 text-slate-600">{confirmDialog.message}</p>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -443,7 +445,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
                 onClick={() => setConfirmDialog(null)}
                 className="rounded border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700"
               >
-                Annuler
+                {dict.admin.btnCancel}
               </button>
               <button
                 type="button"
@@ -453,7 +455,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
                 }}
                 className="rounded bg-red-600 px-4 py-2 text-xs font-bold uppercase text-white"
               >
-                Confirmer
+                {dict.admin.btnConfirm}
               </button>
             </div>
           </div>
@@ -463,10 +465,10 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
       {showLogoutConfirmation && (
         <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/60 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">Confirmer la déconnexion</h3>
-            <p className="mt-3 text-sm text-slate-600">Voulez-vous vraiment vous déconnecter ?</p>
+            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">{dict.admin.confirmLogoutTitle}</h3>
+            <p className="mt-3 text-sm text-slate-600">{dict.admin.confirmLogoutDesc}</p>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowLogoutConfirmation(false)} className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-200">Non</button>
+              <button type="button" onClick={() => setShowLogoutConfirmation(false)} className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-200">{dict.admin.btnNoLogout}</button>
               <button
                 type="button"
                 onClick={() => {
@@ -477,7 +479,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
                 }}
                 className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-red-700"
               >
-                Oui, déconnecter
+                {dict.admin.btnYesLogout}
               </button>
             </div>
           </div>
@@ -490,15 +492,15 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs uppercase font-mono text-slate-400">Back-Office Administration</span>
+              <span className="text-xs uppercase font-mono text-slate-400">{dict.admin.subTitle}</span>
               {activeUser && (
                 <span className="px-2 py-0.5 bg-blue-900 text-blue-300 text-[10px] font-bold rounded uppercase ml-2">
-                  Connecté : {activeUser.firstName || activeUser.name || 'Admin'} ({activeUser.role})
+                  {dict.admin.connectedAs} {activeUser.firstName || activeUser.name || 'Admin'} ({activeUser.role})
                 </span>
               )}
             </div>
             <h1 className="font-display text-3xl font-extrabold uppercase text-white tracking-wide">
-              TIFAOUT AUTO · Gérance Atelier & Ventes
+              {dict.admin.title}
             </h1>
           </div>
 
@@ -507,21 +509,21 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
               onClick={() => navigate('home')}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded border border-slate-700 transition-colors"
             >
-              Voir le Site Public →
+              {dict.admin.viewPublicSite}
             </button>
             {activeUser ? (
               <button
                 onClick={() => setShowLogoutConfirmation(true)}
                 className="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold uppercase rounded shadow transition-colors"
               >
-                Déconnexion
+                {dict.admin.logoutBtn}
               </button>
             ) : (
               <button
                 onClick={() => navigate('auth')}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase rounded shadow transition-colors"
               >
-                Se Connecter Admin
+                {dict.admin.loginAdminBtn}
               </button>
             )}
           </div>
@@ -536,7 +538,7 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
               onClick={loadAllData}
               className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded shadow transition"
             >
-              Réactualiser
+              {dict.admin.refreshBtn}
             </button>
           </div>
         )}
@@ -545,10 +547,10 @@ export default function AdminBackoffice({ navigate }: AdminBackofficeProps) {
         <div className="flex border-b border-slate-300 mb-8 bg-white rounded-t-xl px-4 shadow-sm overflow-x-auto">
 
           {[
-            { id: 'products', label: ' Catalogue Produits', count: productList.length },
-            { id: 'orders', label: ' Commandes Web', count: orderList.length },
-            { id: 'quotes', label: ' Devis Reçus', count: quoteList.length },
-            { id: 'users', label: ' Comptes & Garagistes', count: usersList.length },
+            { id: 'products', label: dict.admin.tabs.products, count: productList.length },
+            { id: 'orders', label: dict.admin.tabs.orders, count: orderList.length },
+            { id: 'quotes', label: dict.admin.tabs.quotes, count: quoteList.length },
+            { id: 'users', label: dict.admin.tabs.users, count: usersList.length },
           ].map(t => (
             <button
               key={t.id}

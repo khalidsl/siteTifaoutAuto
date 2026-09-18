@@ -2,20 +2,18 @@ import { useState, useEffect } from 'react';
 import type { Page, Category, QuoteRequest as QuoteRequestType } from '../types';
 import { createQuoteApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { resolveMediaUrl } from '../utils/media';
 import {
-  FaCar,
-  FaUser,
-  FaWrench,
-  FaCamera,
   FaCheck,
   FaPhone,
-  FaShieldHalved,
   FaAward,
   FaClock,
   FaTrashCan,
   FaCircleExclamation,
-  FaArrowRight
+  FaArrowRight,
+  FaArrowLeft,
+  FaCamera,
 } from 'react-icons/fa6';
 
 interface QuoteRequestProps {
@@ -24,6 +22,7 @@ interface QuoteRequestProps {
 }
 
 export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps) {
+  const { dict, isRTL } = useLanguage();
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -83,17 +82,17 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
     setErrorMsg('');
 
     if (!form.name.trim() || !form.phone.trim()) {
-      setErrorMsg('Veuillez renseigner au moins votre nom et votre numéro de téléphone.');
+      setErrorMsg(dict.quote.errorRequired);
       return;
     }
 
     if (!form.vehicleBrand.trim() && !form.vehicleModel.trim()) {
-      setErrorMsg('Veuillez indiquer au moins la marque ou le modèle de votre véhicule.');
+      setErrorMsg(dict.quote.errorVehicle);
       return;
     }
 
     if (!form.description.trim()) {
-      setErrorMsg('Veuillez décrire brièvement le problème ou les symptômes constatés.');
+      setErrorMsg(dict.quote.errorDesc);
       return;
     }
 
@@ -127,7 +126,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error('Quote submission error:', err);
-      setErrorMsg(err.message || 'Erreur lors de l\'envoi de la demande de devis.');
+      setErrorMsg(err.message || dict.common.error);
     } finally {
       setIsSubmitting(false);
     }
@@ -145,40 +144,40 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
           </div>
 
           <span className="inline-block px-3 py-1 bg-blue-50 text-blue-800 font-mono text-xs font-extrabold rounded-full mb-3">
-            Demande envoyée avec succès
+            {dict.quote.successBadge}
           </span>
 
           <h2 className="font-display text-3xl font-extrabold uppercase text-slate-900 mb-2">
-            Devis N° {submittedQuote.quoteNumber || 'DEV-2026'}
+            {dict.quote.successTitle} {submittedQuote.quoteNumber || 'DEV-2026'}
           </h2>
 
           <p className="text-slate-600 text-sm leading-relaxed mb-6">
-            Merci <strong>{submittedQuote.name}</strong>. Nos techniciens spécialistes en injection diesel examinent votre dossier. Nous vous recontacterons au <strong>{submittedQuote.phone}</strong> sous <strong>2 heures ouvrées</strong> avec notre meilleure proposition chiffrée.
+            {dict.quote.successMsg1} <strong>{submittedQuote.name}</strong>. {dict.quote.successMsg2} <strong dir="ltr">{submittedQuote.phone}</strong> {dict.quote.successMsg3}
           </p>
 
           {photoUrl && (
             <div className="mb-6 p-3 bg-slate-50 border border-slate-200 rounded-xl text-left flex items-center gap-4">
               <img src={photoUrl} alt="Photo transmise" className="w-16 h-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
               <div>
-                <p className="text-xs font-bold text-slate-800">Photo transmise à l'atelier</p>
-                <p className="text-[11px] text-slate-500">Image jointe au dossier d'expertise technique</p>
+                <p className="text-xs font-bold text-slate-800">{dict.quote.photoAttached}</p>
+                <p className="text-[11px] text-slate-500">{dict.quote.photoAttachedDesc}</p>
               </div>
             </div>
           )}
 
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 text-left text-xs space-y-2 text-slate-700">
             <div className="flex justify-between border-b border-slate-200 pb-2">
-              <span className="text-slate-500 font-medium">Véhicule :</span>
+              <span className="text-slate-500 font-medium">{dict.quote.vehicleSummary}</span>
               <span className="font-bold text-slate-900">{submittedQuote.vehicleBrand} {submittedQuote.vehicleModel} {submittedQuote.vehicleYear ? `(${submittedQuote.vehicleYear})` : ''}</span>
             </div>
             {submittedQuote.city && (
               <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-medium">Ville :</span>
+                <span className="text-slate-500 font-medium">{dict.quote.citySummary}</span>
                 <span className="font-bold text-slate-900">{submittedQuote.city}</span>
               </div>
             )}
             <div className="pt-1">
-              <span className="text-slate-500 font-medium block mb-1">Problème décrit :</span>
+              <span className="text-slate-500 font-medium block mb-1">{dict.quote.problemSummary}</span>
               <p className="text-slate-800 bg-white p-2.5 rounded border border-slate-200 italic font-sans text-xs">
                 "{submittedQuote.description}"
               </p>
@@ -190,7 +189,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
               onClick={() => navigate('catalog')}
               className="flex-1 py-3.5 text-xs font-bold tracking-widest uppercase rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 transition-colors"
             >
-              Voir le catalogue
+              {dict.quote.seeCatalogBtn}
             </button>
             <button
               onClick={() => {
@@ -214,7 +213,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
               }}
               className="flex-1 py-3.5 text-xs font-bold tracking-widest uppercase rounded-xl bg-blue-800 hover:bg-blue-900 text-white transition-colors shadow-md"
             >
-              Autre Demande
+              {dict.quote.otherQuoteBtn}
             </button>
           </div>
         </div>
@@ -227,18 +226,18 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
       {/* Header Banner */}
       <div className="bg-slate-950 border-b border-slate-800 text-white py-12 px-6 mb-10 shadow-lg relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-9xl text-blue-500 font-black font-display">
-          DEVIS
+          {dict.quote.badge}
         </div>
         <div className="max-w-[1440px] mx-auto relative z-10">
           <div className="inline-flex items-center gap-2 mb-3 px-3.5 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-full text-amber-300 text-xs font-bold uppercase tracking-wider">
             <FaClock className="text-xs" />
-            <span>Réponse garantie sous 2 heures ouvrées</span>
+            <span>{dict.quote.guaranteedResponse}</span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold uppercase tracking-tight text-white drop-shadow">
-            Demande de Devis Rapide & Gratuit
+            {dict.quote.headerTitle}
           </h1>
           <p className="text-slate-300 text-sm sm:text-base max-w-2xl mt-3 leading-relaxed">
-            Renseignez vos coordonnées, les détails de votre véhicule et décrivez le problème constaté. Nos techniciens spécialistes de l'injection diesel à Agadir vous recontactent immédiatement avec un devis précis.
+            {dict.quote.headerDesc}
           </p>
         </div>
       </div>
@@ -252,32 +251,36 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
               {/* ── STEP 1: Vos Informations Personnelles ── */}
               <div>
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-5">
-                  <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-xs shadow">
+                  <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
                     1
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-extrabold uppercase text-slate-900">
-                      Vos Informations Personnelles
+                      {dict.quote.step1Title}
                     </h3>
-                    <p className="text-xs text-slate-500">Pour vous recontacter rapidement avec votre tarif</p>
+                    <p className="text-xs text-slate-500">{dict.quote.step1Desc}</p>
                   </div>
                 </div>
 
                 {/* Type de client */}
                 <div className="mb-4">
-                  <label className="block text-xs uppercase font-bold text-slate-600 mb-2">Vous êtes :</label>
+                  <label className="block text-xs uppercase font-bold text-slate-600 mb-2">{dict.quote.clientTypeLabel}</label>
                   <div className="grid grid-cols-3 gap-3">
-                    {(['Particulier', 'Garagiste Pro', 'Transporteur'] as const).map(type => (
+                    {[
+                      { key: 'Particulier' as const, label: dict.quote.clientTypes.particular },
+                      { key: 'Garagiste Pro' as const, label: dict.quote.clientTypes.garagePro },
+                      { key: 'Transporteur' as const, label: dict.quote.clientTypes.transporter },
+                    ].map(type => (
                       <button
-                        key={type}
+                        key={type.key}
                         type="button"
-                        onClick={() => setForm(p => ({ ...p, customerType: type }))}
-                        className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${form.customerType === type
+                        onClick={() => setForm(p => ({ ...p, customerType: type.key }))}
+                        className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${form.customerType === type.key
                             ? 'bg-blue-800 text-white border-blue-800 shadow-md scale-[1.02]'
                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-400'
                           }`}
                       >
-                        {type}
+                        {type.label}
                       </button>
                     ))}
                   </div>
@@ -286,13 +289,13 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Nom complet <span className="text-red-500">*</span>
+                      {dict.quote.fullName} <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type="text"
                         required
-                        placeholder="Ex: Mohammed Alami"
+                        placeholder={dict.quote.fullNamePlaceholder}
                         value={form.name}
                         onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                         className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -302,16 +305,17 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
 
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Téléphone mobile <span className="text-red-500">*</span>
+                      {dict.quote.phone} <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type="tel"
                         required
-                        placeholder="06 12 34 56 78"
+                        placeholder={dict.quote.phonePlaceholder}
                         value={form.phone}
                         onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
                         className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono"
+                        dir="ltr"
                       />
                     </div>
                   </div>
@@ -320,11 +324,11 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                 <div className="grid sm:grid-cols-2 gap-4 mt-4">
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Ville
+                      {dict.quote.city}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: Agadir, Casablanca, Marrakech, Inezgane..."
+                      placeholder={dict.quote.cityPlaceholder}
                       value={form.city}
                       onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -333,14 +337,15 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
 
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Adresse Email (Optionnel)
+                      {dict.quote.email}
                     </label>
                     <input
                       type="email"
-                      placeholder="votre@email.com"
+                      placeholder={dict.quote.emailPlaceholder}
                       value={form.email}
                       onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -349,26 +354,26 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
               {/* ── STEP 2: Informations du Véhicule ── */}
               <div>
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-5">
-                  <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-xs shadow">
+                  <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
                     2
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-extrabold uppercase text-slate-900">
-                      Informations du Véhicule
+                      {dict.quote.step2Title}
                     </h3>
-                    <p className="text-xs text-slate-500">Pour identifier la bonne référence d'injecteur ou de pompe</p>
+                    <p className="text-xs text-slate-500">{dict.quote.step2Desc}</p>
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Marque du véhicule <span className="text-red-500">*</span>
+                      {dict.quote.vehicleBrand} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Peugeot, Dacia, Toyota, Renault..."
+                      placeholder={dict.quote.vehicleBrandPlaceholder}
                       value={form.vehicleBrand}
                       onChange={e => setForm(p => ({ ...p, vehicleBrand: e.target.value }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -377,12 +382,12 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
 
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Modèle & Motorisation <span className="text-red-500">*</span>
+                      {dict.quote.vehicleModel} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Duster 1.5 dCi, Golf 7 2.0 TDI, Partner 1.6 HDi..."
+                      placeholder={dict.quote.vehicleModelPlaceholder}
                       value={form.vehicleModel}
                       onChange={e => setForm(p => ({ ...p, vehicleModel: e.target.value }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -391,11 +396,11 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
 
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Année du véhicule
+                      {dict.quote.vehicleYear}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: 2016"
+                      placeholder={dict.quote.vehicleYearPlaceholder}
                       value={form.vehicleYear}
                       onChange={e => setForm(p => ({ ...p, vehicleYear: e.target.value }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -406,32 +411,33 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Composant concerné
+                      {dict.quote.partCategory}
                     </label>
                     <select
                       value={form.partCategory}
                       onChange={e => setForm(p => ({ ...p, partCategory: e.target.value as Category }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all cursor-pointer"
                     >
-                      <option value="injecteur">Injecteurs Diesel (Bosch, Delphi, Denso, Siemens...)</option>
-                      <option value="pompe">Pompe Haute Pression (CP1, CP3, DFP...)</option>
-                      <option value="capteur">Capteur de Pression Rail</option>
-                      <option value="regulateur">Régulateur de Pression DRV</option>
-                      <option value="joint">Joints & Pochettes Pare-feu</option>
-                      <option value="autre">Autre composant / Je ne sais pas</option>
+                      <option value="injecteur">{dict.nav.categories.injecteur}</option>
+                      <option value="pompe">{dict.nav.categories.pompe}</option>
+                      <option value="capteur">{dict.nav.categories.capteur}</option>
+                      <option value="regulateur">{dict.nav.categories.regulateur}</option>
+                      <option value="joint">{dict.nav.categories.joint}</option>
+                      <option value="autre">{dict.nav.categories.autre}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                      Référence pièce (Si vous la connaissez)
+                      {dict.quote.partReference}
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: 0 445 110 369 ou EJBR05102D"
+                      placeholder={dict.quote.partRefPlaceholder}
                       value={form.partRef}
                       onChange={e => setForm(p => ({ ...p, partRef: e.target.value }))}
                       className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono"
+                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -440,26 +446,26 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
               {/* ── STEP 3: Description du Problème & Photos ── */}
               <div>
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3 mb-5">
-                  <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-xs shadow">
+                  <div className="w-8 h-8 rounded-full bg-blue-800 text-white flex items-center justify-center font-bold text-xs shadow shrink-0">
                     3
                   </div>
                   <div>
                     <h3 className="font-display text-lg font-extrabold uppercase text-slate-900">
-                      Description du Problème & Photo
+                      {dict.quote.step3Title}
                     </h3>
-                    <p className="text-xs text-slate-500">Expliquez les symptômes et joignez une photo si possible</p>
+                    <p className="text-xs text-slate-500">{dict.quote.step3Desc}</p>
                   </div>
                 </div>
 
                 {/* Symptômes / Problème */}
                 <div className="mb-5">
                   <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
-                    Quel est le problème constaté ? <span className="text-red-500">*</span>
+                    {dict.quote.issueLabel} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     required
                     rows={4}
-                    placeholder="Décrivez les symptômes : perte de puissance, fumée noire à l'accélération, voyant moteur/injection allumé, claquement moteur, démarrage difficile à froid, odeur de gasoil ou fuite..."
+                    placeholder={dict.quote.issuePlaceholder}
                     value={form.description}
                     onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                     className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none leading-relaxed"
@@ -469,8 +475,8 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                 {/* Upload Photo Optionnel */}
                 <div>
                   <label className="block text-xs uppercase font-bold text-slate-700 mb-1 flex items-center justify-between">
-                    <span>Ajouter une photo (Optionnel)</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Étiquette, pièce ou voyant</span>
+                    <span>{dict.quote.photoLabel}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">{dict.quote.photoSublabel}</span>
                   </label>
 
                   {photoPreview ? (
@@ -483,7 +489,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                         />
                         <div className="truncate">
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 mb-0.5">
-                            <FaCheck className="text-[11px]" /> Photo prête à l'envoi
+                            <FaCheck className="text-[11px]" /> {dict.quote.photoReady}
                           </span>
                           <p className="text-xs text-slate-600 truncate font-mono">{selectedFile?.name}</p>
                           <p className="text-[10px] text-slate-400">
@@ -513,10 +519,10 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                           <FaCamera className="text-lg" />
                         </div>
                         <p className="text-sm font-bold text-slate-800">
-                          Cliquez ou glissez une photo ici
+                          {dict.quote.photoClickHint}
                         </p>
                         <p className="text-xs text-slate-500 max-w-sm">
-                          Prenez en photo l'étiquette de référence, la pièce démontée ou le voyant du tableau de bord (JPG, PNG).
+                          {dict.quote.photoDesc}
                         </p>
                       </div>
                     </div>
@@ -538,8 +544,8 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                 disabled={isSubmitting}
                 className="w-full py-4 text-sm font-extrabold tracking-widest uppercase rounded-xl bg-blue-800 hover:bg-blue-900 disabled:bg-blue-400 text-white shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
-                <span>{isSubmitting ? 'Envoi de votre demande en cours...' : 'Envoyer ma Demande de Devis Gratuit'}</span>
-                {!isSubmitting && <FaArrowRight className="text-xs" />}
+                <span>{isSubmitting ? dict.quote.submitting : dict.quote.submit}</span>
+                {!isSubmitting && (isRTL ? <FaArrowLeft className="text-xs" /> : <FaArrowRight className="text-xs" />)}
               </button>
             </form>
           </div>
@@ -550,7 +556,7 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
               <div className="flex items-center gap-2 pb-3 border-b border-slate-200">
                 <FaAward className="text-blue-800 text-lg" />
                 <h3 className="font-display text-lg font-bold uppercase text-slate-900">
-                  Nos Engagements Atelier
+                  {dict.quote.advantagesTitle}
                 </h3>
               </div>
 
@@ -560,8 +566,8 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                     ✓
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Chiffrage Express Gratuit</h4>
-                    <p className="mt-0.5 text-slate-500">Nos techniciens analysent vos symptômes et vous proposent la solution la plus économique.</p>
+                    <h4 className="font-bold text-slate-900 text-sm">{dict.quote.adv1Title}</h4>
+                    <p className="mt-0.5 text-slate-500">{dict.quote.adv1Desc}</p>
                   </div>
                 </div>
 
@@ -570,8 +576,8 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                     ✓
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Banc Certifié Bosch DCI 200</h4>
-                    <p className="mt-0.5 text-slate-500">Test officiel des débits et temps de réaction de chaque injecteur Common Rail.</p>
+                    <h4 className="font-bold text-slate-900 text-sm">{dict.quote.adv2Title}</h4>
+                    <p className="mt-0.5 text-slate-500">{dict.quote.adv2Desc}</p>
                   </div>
                 </div>
 
@@ -580,8 +586,8 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
                     ✓
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Garantie 6 Mois</h4>
-                    <p className="mt-0.5 text-slate-500">Toutes nos pièces reconditionnées en échange standard sont garanties un an.</p>
+                    <h4 className="font-bold text-slate-900 text-sm">{dict.quote.adv3Title}</h4>
+                    <p className="mt-0.5 text-slate-500">{dict.quote.adv3Desc}</p>
                   </div>
                 </div>
               </div>
@@ -591,15 +597,17 @@ export default function QuoteRequest({ navigate, onAddQuote }: QuoteRequestProps
             <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800">
               <div className="flex items-center gap-2 text-amber-400 mb-2">
                 <FaPhone className="text-sm" />
-                <h4 className="font-display text-base font-extrabold uppercase">Besoin d'un diagnostic urgent ?</h4>
+                <h4 className="font-display text-base font-extrabold uppercase">{dict.quote.urgentTitle}</h4>
               </div>
               <p className="text-slate-300 text-xs leading-relaxed mb-4">
-                Nos spécialistes en injection diesel vous répondent directement pour identifier votre référence :
+                {dict.quote.urgentDesc}
               </p>
               <a
-                href="tel:+212525200665"
+                href={`tel:${dict.common.phoneIntl}`}
                 className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-center block text-sm uppercase tracking-wider transition-colors shadow-lg font-mono"
+                dir="ltr"
               >
+                {dict.common.phone}
               </a>
             </div>
           </div>

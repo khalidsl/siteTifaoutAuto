@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { resolveMediaUrl } from '../../utils/media';
 import Pagination from '../../components/admin/Pagination';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ProductsTabProps {
   productList: any[];
@@ -56,6 +57,8 @@ export default function ProductsTab({
   onSetRetainedImages,
 }: ProductsTabProps) {
   const [page, setPage] = useState(1);
+  const { dict } = useLanguage();
+
   const CATEGORY_PLACEHOLDERS: Record<string, string> = {
     injecteur: 'https://placehold.co/150x150/dbeafe/1d4ed8?text=Injecteur',
     pompe: 'https://placehold.co/150x150/fef9c3/854d0e?text=Pompe+HP',
@@ -82,13 +85,12 @@ export default function ProductsTab({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="font-display text-2xl font-bold uppercase text-slate-900">
-            Gestion des Produits & Stocks ({productList.length})
+            {dict.admin.products.title} ({productList.length})
           </h2>
-          <p className="text-xs text-slate-500 mt-1">Ajoutez, modifiez le prix/stock ou supprimez les pièces de votre catalogue.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <label className="px-3 py-2 bg-emerald-600 text-white font-bold text-xs uppercase rounded hover:bg-emerald-700 transition-colors shadow cursor-pointer">
-            Importer CSV (Excel)
+            {dict.admin.products.importExcel}
             <input type="file" accept=".csv,text/csv" onChange={onImportProducts} className="hidden" />
           </label>
           <button
@@ -96,14 +98,14 @@ export default function ProductsTab({
             onClick={onExportProducts}
             className="px-3 py-2 bg-slate-700 text-white font-bold text-xs uppercase rounded hover:bg-slate-800 transition-colors shadow"
           >
-            Exporter Excel
+            {dict.admin.products.exportExcel}
           </button>
           <button
             type="button"
             onClick={onToggleAddForm}
             className="px-4 py-2 bg-blue-600 text-white font-bold text-xs uppercase rounded hover:bg-blue-700 transition-colors shadow"
           >
-            {showAddForm ? 'Fermer le Formulaire' : '+ Ajouter un Produit'}
+            {showAddForm ? dict.admin.products.hideForm : dict.admin.products.addProduct}
           </button>
         </div>
       </div>
@@ -112,7 +114,7 @@ export default function ProductsTab({
         <div className="sm:col-span-2">
           <input
             type="text"
-            placeholder="Rechercher par nom, marque ou référence..."
+            placeholder={dict.admin.products.searchPlaceholder}
             value={prodSearch}
             onChange={e => onSearchChange(e.target.value)}
             className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded outline-none focus:border-blue-600"
@@ -124,12 +126,15 @@ export default function ProductsTab({
             onChange={e => onCategoryChange(e.target.value)}
             className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded outline-none focus:border-blue-600 cursor-pointer"
           >
-            <option value="all">Toutes les catégories</option>
-            <option value="injecteur">Injecteur Diesel</option>
-            <option value="pompe">Pompe Haute Pression</option>
-            <option value="capteur">Capteur de Pression</option>
-            <option value="joint">Joint Pare-feu</option>
-            <option value="regulateur">Régulateur DRV</option>
+            <option value="all">{dict.admin.products.allCategories}</option>
+            <option value="injecteur">{dict.nav.categories.injecteur}</option>
+            <option value="pompe">{dict.nav.categories.pompe}</option>
+            <option value="capteur">{dict.nav.categories.capteur}</option>
+            <option value="joint">{dict.nav.categories.joint}</option>
+            <option value="regulateur">{dict.nav.categories.regulateur}</option>
+            <option value="valve">{dict.nav.categories.valve}</option>
+            <option value="durite">{dict.nav.categories.durite}</option>
+            <option value="autre">{dict.nav.categories.autre}</option>
           </select>
         </div>
       </div>
@@ -353,12 +358,12 @@ export default function ProductsTab({
                       className={`text-xs font-bold px-2 py-0.5 rounded transition-colors ${inStock ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'
                         }`}
                     >
-                      {inStock ? `● En Stock (${p.stock})` : '○ Rupture'}
+                      {inStock ? `● ${dict.admin.products.stockStatus.inStock} (${p.stock})` : `○ ${dict.admin.products.stockStatus.outOfStock}`}
                     </button>
                   </div>
 
                   <div className="flex mt-3">
-                    <div className="relative shrink-0 mr-3">
+                    <div className="relative shrink-0 mr-3 rtl:ml-3 rtl:mr-0">
                       <img src={imgSrc} alt={p.name} className="w-16 h-16 object-cover rounded border border-slate-200" />
                       {imgCount > 1 && (
                         <span className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[9px] font-bold px-1 rounded-full border border-white shadow-sm">
@@ -384,12 +389,12 @@ export default function ProductsTab({
                       onClick={() => onStartEdit(p)}
                       className="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded transition-colors"
                     >
-                      ✏ Modifier
+                      ✏ {dict.admin.products.actions.edit}
                     </button>
                     <button
                       onClick={() => onDeleteProduct(p._id, p.name)}
                       className="px-2 py-1 text-[11px] font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded transition-colors"
-                      title="Supprimer le produit"
+                      title={dict.admin.products.actions.delete}
                     >
                       🗑
                     </button>

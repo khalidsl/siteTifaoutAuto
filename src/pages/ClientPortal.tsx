@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { Page, RepairTicket, Order, QuoteRequest, ApiOrderItem } from '../types';
-import { MOCK_REPAIR_TICKETS } from '../data/mockData';
 import { getMyOrdersApi, getMyQuotesApi } from '../services/api';
 import { useAuth, getSession } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLanguage } from '../context/LanguageContext';
 import { resolveMediaUrl } from '../utils/media';
 
 interface ClientPortalProps {
@@ -13,6 +13,7 @@ interface ClientPortalProps {
 export default function ClientPortal({ navigate }: ClientPortalProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const { notify } = useToast();
+  const { dict, language } = useLanguage();
   const currentUser = user || getSession();
   const [activeTab, setActiveTab] = useState<'orders' | 'quotes' | 'profile'>('orders');
   const [selectedTicket, setSelectedTicket] = useState<RepairTicket | null>(null);
@@ -48,7 +49,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
   if (!currentUser || !currentUser.token) return null;
 
   const fullName = currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName}` : (currentUser.name || 'Client');
-  const companyInfo = currentUser.vehicleBrand || currentUser.companyName || 'Particulier';
+  const companyInfo = currentUser.vehicleBrand || currentUser.companyName || (language === 'ar' ? 'عميل فردي' : 'Particulier');
   const discountRate = currentUser.discountRate ?? 0;
 
   const initials = fullName
@@ -165,21 +166,27 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
       {showLogoutConfirmation && (
         <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/60 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">Confirmer la déconnexion</h3>
-            <p className="mt-3 text-sm text-slate-600">Voulez-vous vraiment vous déconnecter ?</p>
+            <h3 className="text-lg font-bold uppercase tracking-wide text-slate-900">
+              {dict.clientPortal.confirmLogoutTitle}
+            </h3>
+            <p className="mt-3 text-sm text-slate-600">
+              {dict.clientPortal.confirmLogoutDesc}
+            </p>
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowLogoutConfirmation(false)} className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-200">Non</button>
+              <button type="button" onClick={() => setShowLogoutConfirmation(false)} className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-xs font-bold uppercase text-slate-700 hover:bg-slate-200">
+                {dict.clientPortal.btnNoLogout}
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowLogoutConfirmation(false);
                   logout();
-                  notify('Déconnexion réussie.', 'success');
+                  notify(dict.common.success, 'success');
                   navigate('auth');
                 }}
                 className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold uppercase text-white hover:bg-red-700"
               >
-                Oui, déconnecter
+                {dict.clientPortal.btnYesLogout}
               </button>
             </div>
           </div>
@@ -191,32 +198,28 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-blue-600 text-white">
-                {currentUser.role === 'admin' ? 'Compte Administrateur' : (discountRate > 0 ? 'Compte Garagiste Pro' : 'Compte Client')}
+                {currentUser.role === 'admin' ? dict.clientPortal.adminBadge : (discountRate > 0 ? dict.clientPortal.proBadge : dict.clientPortal.clientBadge)}
               </span>
               {discountRate > 0 && (
                 <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950 font-mono">
-                  Remise Spéciale : -{discountRate}% sur tout le catalogue
+                  {dict.clientPortal.discountBadge.replace('{rate}', String(discountRate))}
                 </span>
               )}
             </div>
             <h1 className="font-display text-3xl font-bold uppercase tracking-wide">
-              Espace Client · {fullName}
+              {dict.clientPortal.welcome} {fullName}
             </h1>
             <p className="text-slate-400 text-xs mt-1">
-              {companyInfo} · {currentUser.email} · {currentUser.phone}
+              {companyInfo} · <span dir="ltr">{currentUser.email}</span> · <span dir="ltr">{currentUser.phone}</span>
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* <div className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-right">
-              <span className="text-[10px] uppercase text-slate-400 block font-semibold">Points de Fidélité</span>
-              <span className="text-xl font-extrabold text-amber-400 font-mono">{currentUser.loyaltyPoints || 0} pts</span>
-            </div> */}
             <button
               onClick={() => setShowLogoutConfirmation(true)}
               className="px-3 py-2 text-xs font-semibold rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
             >
-              Déconnexion
+              {dict.clientPortal.logout}
             </button>
           </div>
         </div>
@@ -226,9 +229,9 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
         {/* Navigation Tabs */}
         <div className="flex border-b border-slate-300 mb-8 bg-white rounded-t-xl px-4 shadow-sm">
           {[
-            { id: 'orders', label: ' Historique des Commandes', count: orders.length },
-            { id: 'quotes', label: ' Mes Demandes de Devis', count: quotes.length },
-            { id: 'profile', label: ' Mon Profil & Avantages ' },
+            { id: 'orders', label: `📦 ${dict.clientPortal.tabOrders}`, count: orders.length },
+            { id: 'quotes', label: `📋 ${dict.clientPortal.tabQuotes}`, count: quotes.length },
+            { id: 'profile', label: `👤 ${dict.clientPortal.tabProfile}` },
           ].map(tab => (
             <button
               key={tab.id}
@@ -254,18 +257,24 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
           <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
               <div>
-                <h2 className="font-display text-2xl font-bold uppercase text-slate-900">Historique de Vos Commandes</h2>
-                <p className="text-xs text-slate-500 mt-1">Retrouvez vos achats et imprimez chaque facture.</p>
+                <h2 className="font-display text-2xl font-bold uppercase text-slate-900">{dict.clientPortal.ordersTitle}</h2>
+                <p className="text-xs text-slate-500 mt-1">{dict.clientPortal.ordersDesc}</p>
               </div>
-              {orders.some(order => order.status === 'Payée') && <button type="button" onClick={printAllInvoices} className="px-3 py-2 text-xs font-bold uppercase rounded bg-blue-600 text-white hover:bg-blue-700">Télécharger toutes les factures payées</button>}
+              {orders.some(order => order.status === 'Payée') && (
+                <button type="button" onClick={printAllInvoices} className="px-3 py-2 text-xs font-bold uppercase rounded bg-blue-600 text-white hover:bg-blue-700">
+                  {dict.clientPortal.downloadPaidInvoices}
+                </button>
+              )}
             </div>
 
             {isLoadingOrders ? (
-              <div className="text-center py-10 text-slate-500">Chargement de vos commandes...</div>
+              <div className="text-center py-10 text-slate-500">{dict.clientPortal.loadingOrders}</div>
             ) : orders.length === 0 ? (
               <div className="text-center py-10 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
-                <p className="text-slate-500 font-semibold">Aucune commande pour le moment.</p>
-                <button onClick={() => navigate('catalog')} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Parcourir le catalogue</button>
+                <p className="text-slate-500 font-semibold">{dict.clientPortal.noOrders}</p>
+                <button onClick={() => navigate('catalog')} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                  {dict.clientPortal.browseCatalog}
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -273,11 +282,11 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                   <div key={order._id} className="border border-slate-200 rounded-lg p-5 bg-slate-50 hover:bg-white transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200">
                       <div>
-                        <span className="font-mono text-sm font-bold text-blue-600 mr-3">{order.orderNumber}</span>
+                        <span className="font-mono text-sm font-bold text-blue-600 mr-3" dir="ltr">{order.orderNumber}</span>
                         <span className="text-xs text-slate-500">
-                          Passée le {
+                          {dict.clientPortal.orderPlacedOn} {
                             order.createdAt
-                              ? new Date(order.createdAt).toLocaleDateString('fr-FR')
+                              ? new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-FR')
                               : (order.date || '—')
                           }
                         </span>
@@ -287,7 +296,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                           {order.status}
                         </span>
                         <span className="font-display text-xl font-bold text-slate-900">
-                          {order.total.toLocaleString('fr-MA')} MAD
+                          {order.total.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} {dict.common.mad}
                         </span>
                         {order.status === 'Payée' && (
                           <button
@@ -295,7 +304,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                             onClick={() => printInvoice(order)}
                             className="px-3 py-1.5 text-xs font-bold uppercase rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
                           >
-                            Facture / PDF
+                            {dict.clientPortal.invoicePdfBtn}
                           </button>
                         )}
                       </div>
@@ -308,7 +317,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                             <p className="font-medium text-gray-800">{item.productName}</p>
                             <p className="text-sm text-gray-500">Réf: {item.productRef || '-'} · Qté: {item.qty}</p>
                           </div>
-                          <span className="font-bold whitespace-nowrap">{(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString('fr-MA')} MAD</span>
+                          <span className="font-bold whitespace-nowrap">{(Number(item.price || 0) * Number(item.qty || 0)).toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} {dict.common.mad}</span>
                         </div>
                       ))}
                     </div>
@@ -325,34 +334,34 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="font-display text-2xl font-bold uppercase text-slate-900">
-                  Mes Demandes de Devis
+                  {dict.clientPortal.quotesTitle}
                 </h2>
                 <p className="text-slate-500 text-xs mt-1">
-                  Suivez en direct les chiffrages de vos pièces et les propositions de notre atelier.
+                  {dict.clientPortal.quotesDesc}
                 </p>
               </div>
               <button
                 onClick={() => navigate('devis')}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded shadow transition-colors"
               >
-                + Nouveau Devis
+                {dict.clientPortal.newQuoteBtn}
               </button>
             </div>
 
             {quotes.length === 0 ? (
               <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
-                <p className="text-slate-500 font-semibold mb-3">Vous n'avez aucune demande de devis en cours.</p>
+                <p className="text-slate-500 font-semibold mb-3">{dict.clientPortal.noQuotes}</p>
                 <button
                   onClick={() => navigate('devis')}
                   className="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow"
                 >
-                  Demander un devis gratuit →
+                  {dict.clientPortal.requestFreeQuote}
                 </button>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
                 {quotes.map(q => {
-                  const dateStr = q.createdAt ? new Date(q.createdAt).toLocaleDateString('fr-FR') : (q.date || 'Récent');
+                  const dateStr = q.createdAt ? new Date(q.createdAt).toLocaleDateString(language === 'ar' ? 'ar-MA' : 'fr-FR') : (q.date || 'Récent');
                   const photoSrc = q.photoUrl ? resolveMediaUrl(q.photoUrl) : null;
 
                   return (
@@ -360,7 +369,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-800 text-white rounded mr-2">
+                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-800 text-white rounded mr-2" dir="ltr">
                               {q.quoteNumber}
                             </span>
                             <span className="text-xs text-slate-400">{dateStr}</span>
@@ -375,9 +384,9 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                         </div>
 
                         <div className="bg-white p-3 border border-slate-200 rounded text-xs space-y-1 mb-4">
-                          <div><strong className="text-slate-700">Véhicule :</strong> {q.vehicleBrand || 'Non précisé'} {q.vehicleModel} {q.vehicleYear ? `(${q.vehicleYear})` : ''}</div>
-                          <div><strong className="text-slate-700">Catégorie & Réf :</strong> {q.partCategory} — <span className="font-mono text-blue-600">{q.partRef || 'Non précisée'}</span></div>
-                          <div><strong className="text-slate-700">Service :</strong> {q.serviceNeeded}</div>
+                          <div><strong className="text-slate-700">{dict.clientPortal.vehicleLabel}</strong> {q.vehicleBrand || 'Non précisé'} {q.vehicleModel} {q.vehicleYear ? `(${q.vehicleYear})` : ''}</div>
+                          <div><strong className="text-slate-700">{dict.clientPortal.categoryRefLabel}</strong> {q.partCategory} — <span className="font-mono text-blue-600" dir="ltr">{q.partRef || 'Non précisée'}</span></div>
+                          <div><strong className="text-slate-700">{dict.clientPortal.serviceLabel}</strong> {q.serviceNeeded}</div>
                           {q.description && <p className="text-slate-500 pt-1 italic">"{q.description}"</p>}
                         </div>
 
@@ -391,12 +400,12 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
                       {q.estimatedPrice ? (
                         <div className="pt-3 border-t border-slate-200 flex justify-between items-center bg-blue-50/50 p-2.5 rounded mt-2">
-                          <span className="text-xs font-bold text-slate-700">Tarif Chiffré Atelier :</span>
-                          <span className="font-display text-lg font-extrabold text-blue-700">{q.estimatedPrice.toLocaleString('fr-MA')} MAD</span>
+                          <span className="text-xs font-bold text-slate-700">{dict.clientPortal.workshopPriceLabel}</span>
+                          <span className="font-display text-lg font-extrabold text-blue-700">{q.estimatedPrice.toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-MA')} {dict.common.mad}</span>
                         </div>
                       ) : (
                         <div className="pt-3 border-t border-slate-200 text-xs text-slate-500 italic">
-                          Chiffrage en cours par nos techniciens...
+                          {dict.clientPortal.quotingInProgress}
                         </div>
                       )}
                     </div>
@@ -418,12 +427,9 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
               <span className="pointer-events-none absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-blue-500/40" />
 
               <div className="flex items-center justify-between mb-6">
-                {/* <span className="font-mono text-[10px] tracking-widest text-blue-400">
-                  FICHE N° {String(currentUser._id || '').slice(-6).toUpperCase() || '——————'}
-                </span> */}
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="font-mono text-[10px] text-emerald-400">ACTIF</span>
+                  <span className="font-mono text-[10px] text-emerald-400">{dict.clientPortal.activeBadge}</span>
                 </span>
               </div>
 
@@ -434,32 +440,17 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
                 <h3 className="font-display text-lg font-bold">{fullName}</h3>
                 <p className="text-slate-400 text-xs mt-1 font-mono">{companyInfo}</p>
                 <span className="mt-3 inline-block px-3 py-1 rounded text-[10px] font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">
-                  {currentUser.role === 'admin' ? 'ADMINISTRATEUR' : discountRate > 0 ? 'GARAGISTE PRO' : 'CLIENT PARTICULIER'}
+                  {currentUser.role === 'admin' ? dict.clientPortal.adminBadge : discountRate > 0 ? dict.clientPortal.proBadge : dict.clientPortal.clientBadge}
                 </span>
               </div>
-
-              {/* <div className="mt-6 pt-5 border-t border-dashed border-slate-700 grid grid-cols-2 gap-3 text-center">
-                <div>
-                  <p className="font-mono text-[9px] uppercase text-slate-500">Fidélité</p>
-                  <p className="font-display text-2xl font-extrabold text-amber-400 font-mono">
-                    {currentUser.loyaltyPoints || 0}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-mono text-[9px] uppercase text-slate-500">Remise</p>
-                  <p className="font-display text-2xl font-extrabold text-blue-400 font-mono">
-                    {discountRate > 0 ? `-${discountRate}%` : '0%'}
-                  </p>
-                </div>
-              </div> */}
             </div>
 
             {/* Fiche technique du compte */}
             <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
               <div className="flex items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
                 <div>
-                  <h2 className="font-display text-2xl font-bold text-slate-900">Informations du compte</h2>
-                  <p className="text-xs text-slate-500 mt-1">Coordonnées utilisées pour vos commandes et devis.</p>
+                  <h2 className="font-display text-2xl font-bold text-slate-900">{dict.clientPortal.accountInfoTitle}</h2>
+                  <p className="text-xs text-slate-500 mt-1">{dict.clientPortal.accountInfoDesc}</p>
                 </div>
                 <span className="font-mono text-[10px] text-slate-400 border border-slate-200 rounded px-2 py-1 shrink-0">
                   {currentUser.role === 'admin' ? 'ADMIN' : discountRate > 0 ? 'PRO' : 'STD'}
@@ -468,15 +459,15 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
               <dl className="space-y-4">
                 {[
-                  ['Nom / Raison sociale', companyInfo],
-                  ['Contact principal', fullName],
+                  [dict.clientPortal.nameCompany, companyInfo],
+                  [dict.clientPortal.mainContact, fullName],
                   ['Téléphone', currentUser.phone],
                   ['Email', currentUser.email],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-baseline gap-3">
                     <dt className="text-xs font-semibold text-slate-500 whitespace-nowrap">{label}</dt>
                     <span className="flex-1 border-b border-dotted border-slate-300 translate-y-[-3px]" />
-                    <dd className="text-sm font-semibold text-slate-900 font-mono text-right">{value || '—'}</dd>
+                    <dd className="text-sm font-semibold text-slate-900 font-mono text-right" dir="ltr">{value || '—'}</dd>
                   </div>
                 ))}
               </dl>
@@ -484,12 +475,12 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
               {discountRate > 0 && (
                 <div className="mt-6 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
                   <div>
-                    <p className="text-sm font-bold text-amber-900">Remise  appliquée automatiquement</p>
+                    <p className="text-sm font-bold text-amber-900">{dict.clientPortal.proDiscountApplied}</p>
                     <p className="text-xs text-amber-700 mt-0.5">
-                      Toutes vos commandes en ligne bénéficient de cette remise sur les tarifs affichés.
+                      {dict.clientPortal.proDiscountDesc}
                     </p>
                   </div>
-                  <span className="font-display text-2xl font-extrabold text-amber-700 font-mono shrink-0">
+                  <span className="font-display text-2xl font-extrabold text-amber-700 font-mono shrink-0" dir="ltr">
                     -{discountRate}%
                   </span>
                 </div>
@@ -577,7 +568,7 @@ export default function ClientPortal({ navigate }: ClientPortalProps) {
 
               <div className="p-3 bg-green-50 border border-green-200 rounded text-xs text-green-900 font-semibold flex items-center justify-between">
                 <span>✓ Pièce validée et conforme aux tolérances constructeur Bosch.</span>
-                <span className="font-mono">Garantie 6 Mois</span>
+                <span className="font-mono">{dict.common.guarantee6Months}</span>
               </div>
             </div>
 
